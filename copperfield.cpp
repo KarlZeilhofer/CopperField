@@ -45,10 +45,12 @@
  * Major Todos:
  * TODO 1: Cutter Diameter wird aus gerberSettings nicht übernommen... k.A. warum.
  *		Jeder GerberReader hat seinen eigenen GCode-Settings Dialog, warum eigentlich?
+ *		Und nochdazu hat das Hauptfenster ebenfalls GCodeSettings!
  * TODO 1: new doesn't work properly
  * TODO 1: clearing the drawing doesn't work
  * TODO 1: clear milling paths doesn't do anything
  * TODO 0: crash on save-button click
+ * TODO 0: export crashes the application
  */
 
 

@@ -7,7 +7,9 @@ GCodeSettings::GCodeSettings(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::GCodeSettings)
 {
-    ui->setupUi(this);
+	qDebug() << "new GCodeSettings";
+
+	ui->setupUi(this);
 
     ui->lineEdit_drillDepth->setText(QString::number(-2.1));
     ui->lineEdit_drillPlungeFeedrate->setText(QString::number(1.0));
@@ -17,8 +19,6 @@ GCodeSettings::GCodeSettings(QWidget *parent) :
     ui->lineEdit_millZDepth->setText(QString::number(-0.1));
     ui->lineEdit_zClearance->setText(QString::number(1.0));
 	updateValuesFromTextfields();
-
-	qDebug() << "new GCodeSettings";
 }
 
 GCodeSettings::~GCodeSettings()

@@ -1224,8 +1224,8 @@ QVector<QGraphicsPathItem*> GerberReader::getMillingGraphicItems()
 
 			QPen pen;
 			pen.setColor(negative);
-			pen.setWidth(0); // used for geometry analysis
-			//pen.setWidthF(millDiameter); // TODO 1: set correct line width
+			//pen.setWidth(0); // used for geometry analysis
+			pen.setWidthF(millDiameter); // TODO 1: set correct line width
 			pen.setStyle(Qt::SolidLine);
 			pen.setCapStyle(Qt::RoundCap);
 			pen.setJoinStyle(Qt::RoundJoin);
