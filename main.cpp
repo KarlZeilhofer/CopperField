@@ -1,4 +1,4 @@
-#include <QtGui/QApplication>
+#include <QtWidgets/QApplication>
 #include "copperfield.h"
 #include "gerberreader.h"
 
@@ -6,7 +6,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 	GerberReader gr(QString("examples/dummy-Front.gtl"),QColor(Qt::white));
-	// gr.testInterpolation(); // TODO: diese interpolation funktioniert noch nicht!!!
+	// gr.testInterpolation(); // TODO 5: diese interpolation funktioniert noch nicht!!!
     // gr.initPerspectiveTransform();
 
     CopperField w;

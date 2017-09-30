@@ -16,8 +16,8 @@
  * Wird hauptsächlich dafür benötigt, um ein einheitliches Interface für das Zeichnen
  * zur Verfügung zu Stellen. Grafik-Objekte benötigen einen oder mehrere Punkte
  * zur Definition.
- * TODO: Deklaration von Eigenschaften wie: Strichstärke, Layer, Farbe
- * TODO: Standard Selekt, Drag und resize Verhalten implementeieren bzw. rechachieren.
+ * TODO 5: Deklaration von Eigenschaften wie: Strichstärke, Layer, Farbe
+ * TODO 5: Standard Selekt, Drag und resize Verhalten implementeieren bzw. rechachieren.
  *
  * Beim Erstellen eines Grafik-Objekts wird die Methode addPoint() genügend oft aufgerufen,
  * damit ein Grafik-Obkjekt konstruiert werden kann.
@@ -28,7 +28,7 @@ class DrawingItem : public QGraphicsItem{
 
 public:
 	DrawingItem(QGraphicsItem *parent, QGraphicsScene *scene)
-		: QGraphicsItem(parent, scene){
+		: QGraphicsItem(parent){
 
 	}
 	virtual ~DrawingItem(){};

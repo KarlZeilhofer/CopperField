@@ -2,14 +2,12 @@
 #include "crosshair.h"
 #include "scene.h"
 
-#include <QtGui>
+#include <QtWidgets>
 #include <QGraphicsScene>
 #include <QScrollBar>
 #include <QWheelEvent>
-#include <QtOpenGL>
 #include <QObject>
 #include "DrawingItem.h"
-#include "cutout.h"
 #include <QPaintEvent>
 
 #include "copperfield.h"
@@ -18,7 +16,7 @@
 View::View(QWidget* parent):QGraphicsView(parent)
 {
 	setRenderHints(QPainter::Antialiasing);
-    setViewport(new QGLWidget(QGLFormat(QGL::DoubleBuffer))); // use OpenGL // ursprünglich SampleBuffers
+	setViewport(new QWidget());
 	setMouseTracking(true); // enable mouse tracking for positioning the cross hair
 	setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
     setDragMode(QGraphicsView::RubberBandDrag); // enable selecting items by "rubber band"
@@ -28,10 +26,10 @@ View::View(QWidget* parent):QGraphicsView(parent)
 //    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 //    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    scene = new Scene(this); // TODO: manage a typecast of this (View*) to QObject* and pass this as argument
+	scene = new Scene(this);
 
 	crossHair = new CrossHair(NULL,NULL);
-//    scene->addItem(crossHair);
+	scene->addItem(crossHair);
 
 
     setScene(scene);
@@ -45,7 +43,6 @@ View::View(QWidget* parent):QGraphicsView(parent)
  * handles zooming of the view.
  * keeps the same scene-point under the cursor while zooming in and out
  */
-// TODO: emit scaleChanged(matrix->m11())
 void View::wheelEvent(QWheelEvent *event)
 {
     int degrees = event->delta()/8;
@@ -84,10 +81,34 @@ void View::mouseMoveEvent(QMouseEvent *event)
     crossHair->setPos(scene->snapToGrid(mapToScene(event->pos())));
 
 	// print coordinate position in status bar
-	QPointF p = mapToScene(event->pos());
-	CopperField::app->coordinateText.setText(QString("POS: %1/%2").arg(p.x()).arg(-p.y())); // inverted y-axis
+	currentPos = mapToScene(event->pos());
+	updateCoordinates();
 
-    QGraphicsView::mouseMoveEvent(event); // call standard implementation
+
+	QGraphicsView::mouseMoveEvent(event); // call standard implementation
+}
+
+
+void View::keyPressEvent(QKeyEvent *event)
+{
+	if(event->key() == Qt::Key_Space){
+		relativeOrigin = currentPos;
+		updateCoordinates();
+	}
+}
+
+void View::updateCoordinates()
+{
+	QPointF p = currentPos;
+
+	QString abs = QString("POS: %1/%2").
+			arg(p.x(), 8, 'f', 3).
+			arg(-p.y(), 8, 'f', 3);// inverted y-axis
+	QString rel = QString("REL: %1/%2").
+			arg(p.x()-relativeOrigin.x(), 8, 'f', 3).
+			arg(-(p.y()-relativeOrigin.y()), 8, 'f', 3);// inverted y-axis
+
+	CopperField::app->statusText.setText(abs + "  " + rel); // inverted y-axis
 }
 
 // slot:
@@ -95,3 +116,28 @@ void View::zoomAll()
 {
 	fitInView(scene->boundingRect, Qt::KeepAspectRatio);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -19,8 +19,11 @@ public:
     View(QWidget *parent);
 
 private:
-    void wheelEvent(QWheelEvent *event); // überladen von QGraphicsItem::wheelEvent()
+	void wheelEvent(QWheelEvent *event); // überladen von QGraphicsView::wheelEvent()
     void mouseMoveEvent(QMouseEvent *event);
+	void keyPressEvent(QKeyEvent *event);
+
+	void updateCoordinates();
 
 public slots:
 	void zoomAll();
@@ -38,6 +41,8 @@ private:
     static const qreal zoomFactor=1.2;
     int drawingState; // todo: allgemeine Statemachine definieren
 						// allgemein in bezug auf alle möglichen figuren.
+	QPointF relativeOrigin;
+	QPointF currentPos;
 };
 
 #endif // VIEW_H

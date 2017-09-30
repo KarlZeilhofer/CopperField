@@ -5,11 +5,15 @@
 #include <Qt>
 
 CrossHair::CrossHair(QGraphicsItem *parent, QGraphicsScene *scene)
-        :QGraphicsPathItem(parent, scene)
+		:QGraphicsPathItem(parent)
 {
     QPainterPath path;
 
-    setPen(QPen(Qt::blue));
+	QPen pen;
+	pen.setColor(Qt::blue);
+	pen.setWidth(0);
+
+	setPen(QPen(pen));
 
     const int size = 100000;
 

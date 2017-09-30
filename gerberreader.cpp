@@ -27,12 +27,12 @@
 // all elements are stored in
 //		QVector<GerberElement*> gElements; // all elements read from the gerber-file
 // and all electrical-nets in
-//		QVector<QVector<GerberElement*>*> nets; // list of element-lists, each element-list represents a electrical net
+//		QVector<QVector<GerberElement*>*> nets; // list of element-lists, each element-list represents an electrical net
 // Gerber-Lines with the Aperture D11 are interpreted as Text.
+// TODO 4: allow other apertures to be defined as text by GUI
 
 // use the function start() to calculate the milling polygons.
 
-// TODO: allow other apertures to be defined as text by GUI
 // implement useful layer-settings (for visible ON/OFF)
 
 GerberReader::GerberReader(QString fileName, QColor c)
@@ -53,7 +53,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 	unitScale = 1; // default = mm
 	yScale = -1; // adoption between monitor and cad coordinate system
 
-	millDiameter = 0.25; // default size
+	millDiameter = 0.1; // default size
 
 	nCoordinates=0;
 	nElements=0;
@@ -76,7 +76,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 		line = stream.readLine();
 		nLine++;
 
-		qDebug(QString("Scanning line %1...").arg(nLine).toAscii());
+		qDebug() << QString("Scanning line %1...").arg(nLine);
 
 		// skip comments:
 		if(line.startsWith("G04", Qt::CaseInsensitive))
@@ -87,7 +87,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 			qDebug("Found Format Specification");
 			line = line.mid(3); // remove %FS
 
-			switch(line.at(0).toAscii())
+			switch(line.at(0).toLatin1())
 			{
 			case 'L': // leading zeros are omitted
 				// can be ignored
@@ -100,13 +100,16 @@ GerberReader::GerberReader(QString fileName, QColor c)
 				failed = true;
 			}
 
-			switch(line.at(1).toAscii())
+			switch(line.at(1).toLatin1())
 			{
 			case 'A': // absolute format
-				// TODO
+				// TODO 4: interpret this format
+				// absolute format is assumed by default
 				break;
 			case 'I': // incremental format
-				// TODO
+				// TODO 4: support Incermental Format
+				qDebug() << "Error: Unsupported Incremental Number Format!";
+				failed = true;
 				break;
 			default:
 				qDebug("Error in A/I Format-Character");
@@ -159,12 +162,12 @@ GerberReader::GerberReader(QString fileName, QColor c)
 				failed = true;
 				break;
 			}else{
-				qDebug(QString("ID = %1").arg(A.id).toAscii());
+				qDebug(QString("ID = %1").arg(A.id).toLatin1());
 			}
 
 			// READ APERTURE TYPE
 			qDebug("reading Aperture Type...");
-			switch(line.at(0).toAscii())
+			switch(line.at(0).toLatin1())
 			{
 			case 'c':
 			case 'C':
@@ -206,7 +209,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 			{
 				failed = true;
 			}else{
-				qDebug(QString("sizeX = %1").arg(A.sizeX).toAscii());
+				qDebug(QString("sizeX = %1").arg(A.sizeX).toLatin1());
 			}
 
 			if(line.at(0)=='X' || line.at(0)=='x') // if rect or oval
@@ -221,7 +224,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 				{
 					failed = true;
 				}else{
-					qDebug(QString("sizeY = %1").arg(A.sizeY).toAscii());
+					qDebug(QString("sizeY = %1").arg(A.sizeY).toLatin1());
 				}
 			}else{
 				qDebug("no X found");
@@ -249,7 +252,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 				failed = true;
 				break;
 			}else{
-				qDebug(QString("ID = %1").arg(A.id).toAscii());
+				qDebug(QString("ID = %1").arg(A.id).toLatin1());
 			}
 
 			if(line.isEmpty()){
@@ -260,7 +263,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 			}else{
 				// READ DRILL TYPE
 				qDebug("reading Drill Type...");
-				switch(line.at(0).toAscii())
+				switch(line.at(0).toLatin1())
 				{
 				case 'c':
 				case 'C':
@@ -283,7 +286,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 				{
 					failed = true;
 				}else{
-					qDebug(QString("diameter = %1").arg(A.sizeX).toAscii());
+					qDebug(QString("diameter = %1").arg(A.sizeX).toLatin1());
 				}
 
 				// FINISHED READING DRILL-TOOL DEFINITION!
@@ -301,7 +304,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 			{
 				failed = true;
 			}else{
-				qDebug(QString("Current Aperture ID = %1").arg(currentApertureID).toAscii());
+				qDebug(QString("Current Aperture ID = %1").arg(currentApertureID).toLatin1());
 				finishedElement = true;
 			}
 
@@ -309,7 +312,27 @@ GerberReader::GerberReader(QString fileName, QColor c)
 			{
 				curAp = &(apertures[currentApertureID]);
 			}else{
-				qDebug(QString("Apperture ID is out of range! (line %1)").arg(nLine).toAscii());
+				qDebug(QString("Apperture ID is out of range! (line %1)").arg(nLine).toLatin1());
+			}
+		}
+		else if(line.startsWith("D", Qt::CaseInsensitive)) // new aperture change format
+		{ // Aperture change
+			qDebug("Found D (Change Apperture)");
+			line = line.mid(1); // remove G54
+			currentApertureID = readNumber(&line, &ok);
+			if(!ok)
+			{
+				failed = true;
+			}else{
+				qDebug(QString("Current Aperture ID = %1").arg(currentApertureID).toLatin1());
+				finishedElement = true;
+			}
+
+			if(currentApertureID>=0 && currentApertureID<1000)
+			{
+				curAp = &(apertures[currentApertureID]);
+			}else{
+				qDebug(QString("Apperture ID is out of range! (line %1)").arg(nLine).toLatin1());
 			}
 		}
 		else if(line.startsWith("X", Qt::CaseInsensitive))
@@ -324,7 +347,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 			x = readNumber(&line, &ok)*scale*unitScale;
 			if(ok)
 			{
-				qDebug(QString("X = %1").arg(x).toAscii());
+				qDebug(QString("X = %1").arg(x).toLatin1());
 			}else{
 				failed = true;
 				break;
@@ -334,14 +357,14 @@ GerberReader::GerberReader(QString fileName, QColor c)
 			if(line.at(0) != 'Y')
 			{
 				failed = true;
-				qDebug(QString("Y character is missing in coordinate in line %1").arg(nLine).toAscii());
+				qDebug(QString("Y character is missing in coordinate in line %1").arg(nLine).toLatin1());
 				break;
 			}
 			line = line.mid(1); // skip Y
 			y = readNumber(&line, &ok)*scale*unitScale*yScale;
 			if(ok)
 			{
-				qDebug(QString("Y = %1").arg(y).toAscii());
+				qDebug(QString("Y = %1").arg(y).toLatin1());
 			}else{
 				failed = true;
 				break;
@@ -354,7 +377,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 				d = (GerberReader::Mode)((int)(readNumber(&line, &ok)));
 				if(ok)
 				{
-					qDebug(QString("Y = %1").arg(y).toAscii());
+					qDebug(QString("Y = %1").arg(y).toLatin1());
 				}else{
 					failed = true;
 					break;
@@ -364,7 +387,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 				d = Drill;
 			}else{
 				failed = true;
-				qDebug(QString("Error in coordinate in line %1").arg(nLine).toAscii());
+				qDebug(QString("Error in coordinate in line %1").arg(nLine).toLatin1());
 				break;
 			}
 
@@ -385,7 +408,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 						finishedElement = false;
 						curElement = new GerberElement(*curAp);
 						curElement->elementType = GerberElement::Polygon;
-						if(currentApertureID == 11){ // TODO: set this number in the gui!
+						if(currentApertureID == 11){ // TODO 2: set this number in the gui!
 							curElement->color = colorText;
 						}else{
 							curElement->color = colorLine;
@@ -396,12 +419,12 @@ GerberReader::GerberReader(QString fileName, QColor c)
 					curElement->append(QPointF(x,y)); // add current point
 
 					nElements++;
-					qDebug(QString("Draw from (%1/%2) to (%3,%4) with D%5").arg(lastPoint.x()).arg(lastPoint.y()).arg(x).arg(y).arg(currentApertureID).toAscii());
+					qDebug(QString("Draw from (%1/%2) to (%3,%4) with D%5").arg(lastPoint.x()).arg(lastPoint.y()).arg(x).arg(y).arg(currentApertureID).toLatin1());
 				}
 			}break;
 			case GerberReader::Draw_OFF:
 			{
-				qDebug(QString("Move to (%1/%2)").arg(x).arg(y).toAscii());
+				qDebug(QString("Move to (%1/%2)").arg(x).arg(y).toLatin1());
 				if(outlineActive)
 				{
 					if(curOL->size()>0)
@@ -426,7 +449,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 				finishedElement = true;
 
 				nElements++;
-				qDebug(QString("Flash at (%1/%2) with D%3").arg(x).arg(y).arg(currentApertureID).toAscii());
+				qDebug(QString("Flash at (%1/%2) with D%3").arg(x).arg(y).arg(currentApertureID).toLatin1());
 			}break;
 			case GerberReader::Drill:
 			{
@@ -440,7 +463,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 				finishedElement = true;
 
 				nElements++;
-				qDebug(QString("Drill at (%1/%2) with T%3").arg(x).arg(y).arg(currentDrillID).toAscii());
+				qDebug(QString("Drill at (%1/%2) with T%3").arg(x).arg(y).arg(currentDrillID).toLatin1());
 
 			}break;
 			} // end switch()
@@ -448,12 +471,12 @@ GerberReader::GerberReader(QString fileName, QColor c)
 			lastPoint = QPointF(x,y); // save this point
 		}else if(line.startsWith("G36", Qt::CaseInsensitive))
 		{
-			qDebug(QString("Start Outline").toAscii());
+			qDebug(QString("Start Outline").toLatin1());
 			outlineActive = true;
 			curOL = new QPolygonF();			
 		}else if(line.startsWith("G37", Qt::CaseInsensitive))
 		{
-			qDebug(QString("End Outline").toAscii());
+			qDebug(QString("End Outline").toLatin1());
 			outlineActive = false;
 			if(!curOL->isClosed()){
 				qWarning("Outline isn't closed!");
@@ -473,11 +496,11 @@ GerberReader::GerberReader(QString fileName, QColor c)
 			}
 			finishedElement = true;
 
-			qDebug(QString("Splitted the Outline into %1 Polygons").arg(polygons->size()).toAscii());
+			qDebug(QString("Splitted the Outline into %1 Polygons").arg(polygons->size()).toLatin1());
 
 		}else if(line.startsWith("M02", Qt::CaseInsensitive))
 		{
-			qDebug(QString("End of File").toAscii());
+			qDebug(QString("End of File").toLatin1());
 		}else if(line.startsWith("FMAT,2", Qt::CaseInsensitive))
 		{
 			qDebug("Drill File, using format 3.3");
@@ -485,22 +508,23 @@ GerberReader::GerberReader(QString fileName, QColor c)
 			rightDigits = 3;
 			scale = 1.0/pow(10,rightDigits);
 		}else {
-			qWarning(QString("Unsupported Command in line %1: '%2'").arg(nLine).arg(line).toAscii());
+			qWarning(QString("Unsupported Command in line %1: '%2'").arg(nLine).arg(line).toLatin1());
 		}
 	}
 
 	if(!failed)
 	{
-		qDebug(QString("Finished (%1 Apertures, %2 Elements, %3 Coordinates)").arg(definedApertureIDs.size()).arg(nElements).arg(nCoordinates).toAscii());
+		qDebug(QString("Finished (%1 Apertures, %2 Elements, %3 Coordinates)").arg(definedApertureIDs.size()).arg(nElements).arg(nCoordinates).toLatin1());
 
-		// TODO: remove dublicate lines:
+		// TODO 4: remove dublicate lines:
 		buildNetsByPoints(); // only copper lines and pads
 	}
 
 	gCodeSettings.show();
 }
 
-// TODO: app crashes on delete!!
+// TODO 0: app crashes on delete!!
+// kann nicht mehr nachvollzogen werden...
 GerberReader::~GerberReader()
 {
 	// delete all allocated objects:
@@ -520,7 +544,7 @@ qreal GerberReader::readNumber(QString* str, bool* ok)
 
 	// READ number
 	QString numStr = str->left(x);
-	qDebug(QString("reading number from String = %1").arg(numStr).toAscii());
+	qDebug(QString("reading number from String = %1").arg(numStr).toLatin1());
 	qreal number = numStr.toDouble(ok);
 	if(!(*ok))
 	{
@@ -609,7 +633,7 @@ void GerberReader::buildNetsByPoints()
 	for(int n=0; n<gElements.size(); n++){
 		if(gElements.at(n)->elementType == GerberElement::Polygon ||
 				gElements.at(n)->elementType == GerberElement::Flash) // todo: expand it to outlines if needed.
-			if(gElements.at(n)->aperture.id != 11){ // TODO: set text aperture in gui
+			if(gElements.at(n)->aperture.id != 11){ // TODO 2: set text aperture in gui
 				elements.append(gElements.at(n));
 			}
 	}
@@ -638,7 +662,7 @@ void GerberReader::buildNetsByPoints()
 		baseCounter++;
 		netCounter = 0;
 
-		qDebug(QString("baseCounter = %1").arg(baseCounter).toAscii());
+		qDebug(QString("baseCounter = %1").arg(baseCounter).toLatin1());
 
 		baseNet = new QVector<GerberElement*>; // make new net,
 		baseNet->append(elements.first());
@@ -646,14 +670,14 @@ void GerberReader::buildNetsByPoints()
 		elements.remove(0); // remove this item from elements-list
 
 //		QRectF r = baseItem->sceneBoundingRect();
-//		qDebug(QString("baseItem.boundingRect = (%1,%2,%3,%4)").arg(r.x()).arg(r.y()).arg(r.width()).arg(r.height()).toAscii());
+//		qDebug(QString("baseItem.boundingRect = (%1,%2,%3,%4)").arg(r.x()).arg(r.y()).arg(r.width()).arg(r.height()).toLatin1());
 
 		int n=0;
 		while(n<elements.size()){ // for all remaining elements
 			GerberElement* testingItem = elements.at(n); // just a synonym for elements.at(n)
 
 			//r = testingItem.boundingRect();
-			//qDebug(QString("elements.at(n)->shape().boundingRect = (%1,%2,%3,%4)").arg(r.x()).arg(r.y()).arg(r.width()).arg(r.height()).toAscii());
+			//qDebug(QString("elements.at(n)->shape().boundingRect = (%1,%2,%3,%4)").arg(r.x()).arg(r.y()).arg(r.width()).arg(r.height()).toLatin1());
 
 			// check if baseNet collides with testingItem:
 			bool collides = false;
@@ -668,25 +692,26 @@ void GerberReader::buildNetsByPoints()
 			}
 			if(collides){ // then fuse testingItem to the baseItem
 				netCounter++;
-				qDebug(QString("netCounter = %1.%2 (remaining elements: %3)").arg(baseCounter).arg(netCounter).arg(elements.size()).toAscii());
+				qDebug(QString("netCounter = %1.%2 (remaining elements: %3)").arg(baseCounter).arg(netCounter).arg(elements.size()).toLatin1());
 //				r = testingItem->sceneBoundingRect();
-//				qDebug(QString("testingItem.boundingRect = (%1,%2,%3,%4)").arg(r.x()).arg(r.y()).arg(r.width()).arg(r.height()).toAscii());
+//				qDebug(QString("testingItem.boundingRect = (%1,%2,%3,%4)").arg(r.x()).arg(r.y()).arg(r.width()).arg(r.height()).toLatin1());
 
 				baseNet->append(testingItem);
 				elements.remove(n); // remove testingItem
 
-				n = 0; // reset for-loop // TODO: is here a more efficient algorithm possible?? i think so!
+				n = 0; // reset for-loop // TODO 4: is here a more efficient algorithm possible?? i think so!
 			}else{
 				n++;
 			}
 		}// end for(elements)
 	}
 
-	//cleanOutlinePathNets(); // TODO
+	//cleanOutlinePathNets(); // TODO 4 cleanOutlinePathNets
 
-	qDebug(QString("Fused %1 elements to %2 different nets!").arg(numElements).arg(nets.size()).toAscii());
-	// TODO: make threadsave!
-	//CopperField::app->netsViewer->setNets(nets);
+	qDebug(QString("Fused %1 elements to %2 different nets!").arg(numElements).arg(nets.size()).toLatin1());
+
+	// TODO 1: make netsViewer threadsave! (was ist hier genau gemeint?
+	CopperField::app->netsViewer->setNets(nets);
 }
 
 
@@ -694,7 +719,7 @@ void GerberReader::setLayerColor(QColor c)
 {
 	color = c;
 
-	// TODO: set different colors
+	// TODO 4: set different colors
 	colorLine = c;
 	colorFlash = c;
 	colorText = c;
@@ -720,7 +745,7 @@ QVector<GerberElement*> GerberReader::elements()
 	 convert the new edge-pixels to a closed polygon
 
 	 simplify the polygon:
-		combine colinear legments
+		combine colinear segments
 		reduce the number of vertices (min edge-length)
 
 	 transform the polygons into the original scene-coordinates
@@ -730,6 +755,8 @@ void GerberReader::calculateMillingPolygons(qreal offset)
 {
 	millingPolygons.clear();
 	millDiameter = 2*offset;
+
+	bool dbg=true;
 
 	QVector<GerberElement*>* net; // currently processed net
 //	QVector<QPolygonF*>* polygons = new QVector<QPolygonF*>; // to be calculated!
@@ -756,9 +783,14 @@ void GerberReader::calculateMillingPolygons(qreal offset)
 			element = net->at(e);
 			QGraphicsPathItem* tempItem;
 			tempItem = new QGraphicsPathItem(element->getItem()->path());
-			tempItem->setPen(QPen(white));
+
+			QPen pen;
+			pen.setColor(white);
+			pen.setWidth(0);
+
+			tempItem->setPen(pen);
 			tempItem->setBrush(QBrush(white));
-			s.addItem(tempItem); // TODO: this heap-objects should be deleted at the end of this function
+			s.addItem(tempItem); // TODO 4: Speicher: this heap-objects should be deleted at the end of this function
 				// becaus they will be childed by the scene s.
 		}
 
@@ -773,7 +805,7 @@ void GerberReader::calculateMillingPolygons(qreal offset)
 
 		QPainter painter(&image);
 
-		s.render(&painter, eRP, eR); // TODO: there are artefacts in the images
+		s.render(&painter, eRP, eR); // TODO 0: there are artefacts in the images: muss geprüft werden!
 
 		//convert to black/white:
 		QImage imBW(image.size(), QImage::Format_RGB32);
@@ -789,13 +821,18 @@ void GerberReader::calculateMillingPolygons(qreal offset)
 			}
 		}
 
-		// imBW.save(QString("image_%1_A_net.bmp").arg(n)); // just for debugging
+		if(dbg)
+			imBW.save(QString("image_%1_A_net.bmp").arg(n)); // just for debugging
 
 		QImage imDil(imBW); // dilated image
 		QPainter painter2(&imDil);
 
 		painter2.setBrush(QBrush(Qt::white));
-		painter2.setPen(Qt::white);
+
+		QPen pen;
+		pen.setColor(white);
+		pen.setWidth(0);
+		painter2.setPen(pen);
 
 		int rP = offset*resolution; // radius in pixels
 
@@ -808,7 +845,8 @@ void GerberReader::calculateMillingPolygons(qreal offset)
 			}
 		}
 
-		// imDil.save(QString("image_%1_B_dilated.bmp").arg(n)); // just for debugging
+		if(dbg)
+			imDil.save(QString("image_%1_B_dilated.bmp").arg(n)); // just for debugging
 
 		// Get Edge-Pixels only!
 		QImage imDilEd(imBW); // dilated edge image
@@ -823,7 +861,8 @@ void GerberReader::calculateMillingPolygons(qreal offset)
 			}
 		}
 
-		//imDilEd.save(QString("image_%1_C_edge.bmp").arg(n)); // just for debugging
+		if(dbg)
+			imDilEd.save(QString("image_%1_C_edge.bmp").arg(n)); // just for debugging
 
 
 
@@ -881,7 +920,7 @@ void GerberReader::calculateMillingPolygons(qreal offset)
 					for(int n=0; n<poly.size()-1; n++)
 					{
 						QPointF v = poly.at(n+1)-poly.at(n);
-						qreal LIMIT = offset; // TODO: make the limit dynamic!!!
+						qreal LIMIT = offset; // TODO 3: make the limit dynamic!!!
 						if(getLength(v) < LIMIT)
 						{
 							poly.remove(n+1, 1);
@@ -900,12 +939,12 @@ void GerberReader::calculateMillingPolygons(qreal offset)
 	} // end for all nets
 
 
-	// Clean the polygons from colinear segments!
+	// TODO 1: Clean the polygons from colinear segments!
 	// DON'T use this on zMap correction!
 //	progress = 0;
 //	for(int mp=0; mp<millingPolygons.size(); mp++){ // for all polygons
 //		QPolygonF poly = millingPolygons.at(mp);
-//		//qDebug(QString("Polygon[%1].size() = %2, before cleaning").arg(mp).arg(poly.size()).toAscii());
+//		//qDebug(QString("Polygon[%1].size() = %2, before cleaning").arg(mp).arg(poly.size()).toLatin1());
 //		for(int v=0; v<poly.size()-2; v++){ // for all vertices
 //			QPointF d1 = poly.at(v+1)-poly.at(v); // first line
 //			QPointF d2 = poly.at(v+2)-poly.at(v+1); // second line
@@ -913,14 +952,14 @@ void GerberReader::calculateMillingPolygons(qreal offset)
 //			// this lines are colinear, when the crossproduct is zero
 //			// and they are in the same direction, when the scalar pruduct is positive
 
-//			qreal e = 1e-5; // epsilon about zero.  TODO: make this limit dynamic!
+//			qreal e = 1e-5; // epsilon about zero.  TODO 3: make this limit dynamic!
 //			if((fabs(d1.y()*d2.x() - d1.x()*d2.y()) < e) && ((d1.x()*d2.x() + d1.y()*d2.y()) > 0)){
 //				poly.remove(v+1); // remove middle point.
 //				v--; // compensate the for-loop v++
 //			}
 //		}
 //		millingPolygons.replace(mp, poly);
-//		//qDebug(QString("Polygon[%1].size() = %2, after cleaning").arg(mp).arg(poly.size()).toAscii());
+//		//qDebug(QString("Polygon[%1].size() = %2, after cleaning").arg(mp).arg(poly.size()).toLatin1());
 
 //		progress = (qreal)mp/millingPolygons.size();
 //		emit calculaltionProgressed("Removing colinear Segments", progress);
@@ -972,33 +1011,33 @@ bool GerberReader::exportGCode(bool mirror) // tODO: remove unsused parameter
 
 
 		QString millFileName = gFileName + ".mill.ngc";
-		qDebug("exporting to " + millFileName.toAscii());
+		qDebug("exporting to " + millFileName.toLatin1());
 		QFile file(millFileName);
 		file.open(QFile::WriteOnly);
 
 		// use
-		//		file.write(QString("Hello World").toAscii());
+		//		file.write(QString("Hello World").toLatin1());
 		// for writing to the file.
 
 		// get all this informations...
-		file.write(QString("(G-Code for Milling a PCB)\n").toAscii());
-		file.write(QString("(Generated with CopperField)\n").toAscii());
+		file.write(QString("(G-Code for Milling a PCB)\n").toLatin1());
+		file.write(QString("(Generated with CopperField)\n").toLatin1());
 		file.write(QString("(Date: %1    Time: %2)\n").
 				   arg(QDate::currentDate().toString("dd.MM.yyyy")).
-					   arg(QTime::currentTime().toString("HH:mm:ss")).toAscii());
+					   arg(QTime::currentTime().toString("HH:mm:ss")).toLatin1());
 		file.write("\n");
 		file.write("(All units in Millimeters)\n");
 		file.write("\n");
 		file.write(QString("(Cutter Diameter: %1 mm)\n").
-				   arg(gCodeSettings.millDiameter()).toAscii());
+				   arg(gCodeSettings.millDiameter()).toLatin1());
 		file.write(QString("(Cutter z-Depth: %1 mm)\n").
-				   arg(idealZ).toAscii());
+				   arg(idealZ).toLatin1());
 		file.write(QString("(Cutter z-Clearance: %1 mm)\n").
-				   arg(gCodeSettings.zClearance()).toAscii());
+				   arg(gCodeSettings.zClearance()).toLatin1());
 		file.write(QString("(Mill Feedrate: %1 mm/s)\n").
-				   arg(gCodeSettings.millFeedrate()).toAscii());
+				   arg(gCodeSettings.millFeedrate()).toLatin1());
 		file.write(QString("(Plunge Feedrate: %1 mm/s)\n").
-				   arg(gCodeSettings.millPlungeFeedrate()).toAscii());
+				   arg(gCodeSettings.millPlungeFeedrate()).toLatin1());
 		file.write("\n");
 
 		for(int n=0; n<millingPolygons.size(); n++){
@@ -1009,26 +1048,26 @@ bool GerberReader::exportGCode(bool mirror) // tODO: remove unsused parameter
 			file.write("\n\n");
 			file.write(QString("G0 x%1 y%2\n").
 					   arg(QString::number(p.at(0).x()*xMirrorScale, 'f', 4)).
-					   arg(QString::number(yScale * p.at(0).y(), 'f', 4)).toAscii()); // goto first point of polygon
+					   arg(QString::number(yScale * p.at(0).y(), 'f', 4)).toLatin1()); // goto first point of polygon
 
-			file.write(QString("G0 z%1\n").arg(QString::number(0 + mapZLevel, 'f', 4)).toAscii()); // fast down to plane
-			file.write(QString("F%1\n").arg(QString::number(gCodeSettings.millPlungeFeedrate()*60, 'f', 4)).toAscii()); // set plunge feed rate in mm/min
+			file.write(QString("G0 z%1\n").arg(QString::number(0 + mapZLevel, 'f', 4)).toLatin1()); // fast down to plane
+			file.write(QString("F%1\n").arg(QString::number(gCodeSettings.millPlungeFeedrate()*60, 'f', 4)).toLatin1()); // set plunge feed rate in mm/min
 
 
-			file.write(QString("G1 z%1\n").arg(QString::number(idealZ + mapZLevel, 'f', 4)).toAscii()); // plunge slowly
+			file.write(QString("G1 z%1\n").arg(QString::number(idealZ + mapZLevel, 'f', 4)).toLatin1()); // plunge slowly
 
 			// mill:
-			file.write(QString("F%1\n").arg(QString::number(gCodeSettings.millFeedrate()*60, 'f', 4)).toAscii()); // set mill feed rate in mm/min
+			file.write(QString("F%1\n").arg(QString::number(gCodeSettings.millFeedrate()*60, 'f', 4)).toLatin1()); // set mill feed rate in mm/min
 			for(int v=1; v<p.size(); v++){
 				mapZLevel = interpolateMap(QPointF(p.at(v).x()*xMirrorScale, p.at(v).y()*yScale));
 				file.write(QString("G1 x%1 y%2 z%3\n").
 						   arg(QString::number(p.at(v).x()*xMirrorScale, 'f', 4)).
 						   arg(QString::number(yScale * p.at(v).y(), 'f', 4)).
-						   arg(QString::number(idealZ+mapZLevel, 'f', 4)).toAscii()); // mill slowly to current point
+						   arg(QString::number(idealZ+mapZLevel, 'f', 4)).toLatin1()); // mill slowly to current point
 			}
 
 			// goto save z:
-			file.write(QString("G0 z%1\n").arg(QString::number(gCodeSettings.zClearance(), 'f', 4)).toAscii()); // goto save z
+			file.write(QString("G0 z%1\n").arg(QString::number(gCodeSettings.zClearance(), 'f', 4)).toLatin1()); // goto save z
 		}
 
 		file.write("\n");
@@ -1053,30 +1092,30 @@ bool GerberReader::exportGCode(bool mirror) // tODO: remove unsused parameter
 			qreal drillDiameter = drillTools[T].sizeX;
 
 			QString drillFileName = gFileName + QString(".drill_T%1_").arg(T) + QString::number(drillDiameter, 'f', 2) + "mm.ngc";
-			qDebug("exporting " + drillFileName.toAscii());
+			qDebug("exporting " + drillFileName.toLatin1());
 			QFile file(drillFileName);
 			file.open(QFile::WriteOnly);
 
-			file.write(QString("(G-Code for Drilling a PCB)\n").toAscii());
-			file.write(QString("(Generated with CopperField)\n").toAscii());
+			file.write(QString("(G-Code for Drilling a PCB)\n").toLatin1());
+			file.write(QString("(Generated with CopperField)\n").toLatin1());
 			file.write(QString("(Date: %1    Time: %2)\n").
 					   arg(QDate::currentDate().toString("dd.MM.yyyy")).
-						   arg(QTime::currentTime().toString("HH:mm:ss")).toAscii());
+						   arg(QTime::currentTime().toString("HH:mm:ss")).toLatin1());
 			file.write("\n");
 			file.write("(All units in Millimeters)\n");
 			file.write("\n");
 			file.write(QString("(Drill Diameter: %1 mm)\n").
-					   arg(drillDiameter).toAscii());
+					   arg(drillDiameter).toLatin1());
 			file.write(QString("(Drill z-Depth: %1 mm)\n").
-					   arg(gCodeSettings.drillDepth()).toAscii());
+					   arg(gCodeSettings.drillDepth()).toLatin1());
 			file.write(QString("(Cutter z-Clearance: %1 mm)\n").
-					   arg(gCodeSettings.zClearance()).toAscii());
+					   arg(gCodeSettings.zClearance()).toLatin1());
 			file.write(QString("(Plunge Feedrate: %1 mm/s)\n").
-					   arg(gCodeSettings.drillPlungeFeedrate()).toAscii());
+					   arg(gCodeSettings.drillPlungeFeedrate()).toLatin1());
 			if(doPerspectiveTransform)
-				file.write(QString("(Coordinates are Perspective-Transformed)\n").toAscii());
+				file.write(QString("(Coordinates are Perspective-Transformed)\n").toLatin1());
 			file.write("\n");
-			file.write(QString("G0 z%1\n").arg(gCodeSettings.zClearance()).toAscii()); // goto save z
+			file.write(QString("G0 z%1\n").arg(gCodeSettings.zClearance()).toLatin1()); // goto save z
 
 			QVector<QPolygonF> pointsList;
 			for(int n=0; n<gElements.size(); n++){ // for all drill points with tool Tx
@@ -1102,14 +1141,14 @@ bool GerberReader::exportGCode(bool mirror) // tODO: remove unsused parameter
 				file.write("\n\n");
 				file.write(QString("G0 x%1 y%2\n").
 						   arg(p.at(0).x()*xMirrorScale).
-						   arg(yScale * p.at(0).y()).toAscii()); // goto drill point
+						   arg(yScale * p.at(0).y()).toLatin1()); // goto drill point
 
-				file.write(QString("G0 z0.000\n").toAscii()); // fast down to plane
-				file.write(QString("F%1\n").arg(gCodeSettings.drillPlungeFeedrate()*60).toAscii()); // set plunge feed rate in mm/min
-				file.write(QString("G1 z%1\n").arg(gCodeSettings.drillDepth()).toAscii()); // plunge slowly
+				file.write(QString("G0 z0.000\n").toLatin1()); // fast down to plane
+				file.write(QString("F%1\n").arg(gCodeSettings.drillPlungeFeedrate()*60).toLatin1()); // set plunge feed rate in mm/min
+				file.write(QString("G1 z%1\n").arg(gCodeSettings.drillDepth()).toLatin1()); // plunge slowly
 
 				// goto save z:
-				file.write(QString("G0 z%1\n").arg(gCodeSettings.zClearance()).toAscii()); // goto save z
+				file.write(QString("G0 z%1\n").arg(gCodeSettings.zClearance()).toLatin1()); // goto save z
 
 			}
 
@@ -1170,19 +1209,31 @@ void GerberReader::setVisible(bool flag)
 
 QVector<QGraphicsPathItem*> GerberReader::getMillingGraphicItems()
 {
-
 	if(millingPolygons.size()>0 && millingItems.size()==0){
 		millingItems.clear();
 		for(int p=0; p<millingPolygons.size(); p++){
 			QPainterPath path;
 			path.addPolygon(millingPolygons.at(p));
 			QGraphicsPathItem* item = new QGraphicsPathItem(path);
+
 			QColor negative;
 			negative.setRed(255-color.red());
 			negative.setGreen(255-color.green());
 			negative.setBlue(255-color.blue());
 			negative.setAlpha(200);
-			item->setPen(QPen(QBrush(negative), millDiameter, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+
+			QPen pen;
+			pen.setColor(negative);
+			pen.setWidth(0); // used for geometry analysis
+			//pen.setWidthF(millDiameter); // TODO 1: set correct line width
+			pen.setStyle(Qt::SolidLine);
+			pen.setCapStyle(Qt::RoundCap);
+			pen.setJoinStyle(Qt::RoundJoin);
+
+
+			item->setPen(pen);
+			//item->setPen(QPen(QBrush(negative), millDiameter, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+
 			item->setBrush(Qt::NoBrush);
 			millingItems.append(item);
 		}
@@ -1209,10 +1260,10 @@ qreal GerberReader::getLengthOfMillingPaths()
 			QPointF d1 = poly.at(v+1)-poly.at(v); // first line
 			polyLength+=getLength(d1);
 		}
-		qDebug(QString("Polygon[%1].length() = %2mm").arg(mp).arg(polyLength).toAscii());
+		qDebug(QString("Polygon[%1].length() = %2mm").arg(mp).arg(polyLength).toLatin1());
 		totalLength+=polyLength;
 	}
-	qDebug(QString("Total Length of milling-paths = %1mm").arg(totalLength).toAscii());
+	qDebug(QString("Total Length of milling-paths = %1mm").arg(totalLength).toLatin1());
 	return totalLength;
 }
 
@@ -1315,6 +1366,8 @@ void GerberReader::run()
 	//exec();
 	qDebug("finished run()");
 	//exec();
+
+	// calling CopperField::calculationFinished() now
 }
 
 void GerberReader::setCutterRadius(qreal cr)
@@ -1325,6 +1378,7 @@ void GerberReader::setCutterRadius(qreal cr)
 }
 
 
+// TODO 4: Z-Map: dies sollte entweder gelöscht werden, oder in ein spezielles menü gepackt werden
 void GerberReader::loadZMap()
 {
 	testInterpolation();
@@ -1333,15 +1387,9 @@ void GerberReader::loadZMap()
 	QString fn("surface-bot-6-2x.txt");
 
 
-	qDebug("reading zMap from " + fn.toAscii());
+	qDebug() << "reading zMap from " << fn;
 	QFile file(fn);
 	file.open(QFile::ReadOnly);
-
-	// use
-	//		file.write(QString("Hello World").toAscii());
-	// for writing to the file.
-
-	// TODO: get all this informations...
 
 	bool readAllX = false;
 
@@ -1409,19 +1457,19 @@ void GerberReader::testInterpolation()
 
 
 	QString millFileName = "testinterpolation.txt";
-	qDebug("exporting to " + millFileName.toAscii());
+	qDebug("exporting to " + millFileName.toLatin1());
 	QFile file(millFileName);
 	file.open(QFile::WriteOnly);
 
 	// use
-	//		file.write(QString("Hello World").toAscii());
+	//		file.write(QString("Hello World").toLatin1());
 	// for writing to the file.
 
 
 	for(qreal y=0; y<yVector.last(); y+=0.2){
 		for(qreal x=0; x<xVector.last(); x+=0.1){
-			file.write(QString("%1 %2 %3\n").arg(x).arg(y).arg(interpolateMap(QPointF(x,y))).toAscii());
-			file.write(QString("%1 %2 %3\n").arg(x).arg(y).arg(interpolateMap(QPointF(x,y))).toAscii());
+			file.write(QString("%1 %2 %3\n").arg(x).arg(y).arg(interpolateMap(QPointF(x,y))).toLatin1());
+			file.write(QString("%1 %2 %3\n").arg(x).arg(y).arg(interpolateMap(QPointF(x,y))).toLatin1());
 		}
 	}
 
@@ -1434,18 +1482,18 @@ void GerberReader::testInterpolation()
 }
 
 // for now, only rectangular point-matrix is supported!
-// TODO: funktioniert noch nicht richtig!!
+// TODO 5: funktioniert noch nicht richtig!!
 // siehe matlab und testinterpolation.txt
 qreal GerberReader::interpolateMap(QPointF p)
 {
 	// get the four neighbour Points and indizes
 
 	if(p.x() < xVector.first() || p.x() > xVector.last()){
-		qDebug(QString("out of x-Range: left = %1, p.x = %2, right = %3").arg(xVector.first()).arg(p.x()).arg(xVector.last()).toAscii());
+		qDebug(QString("out of x-Range: left = %1, p.x = %2, right = %3").arg(xVector.first()).arg(p.x()).arg(xVector.last()).toLatin1());
 		return 0;
 	}
 	if(p.y() < yVector.first() || p.y() > yVector.last()){
-		qDebug(QString("out of y-Range: bot = %1, p.y = %2, top = %3").arg(yVector.first()).arg(p.y()).arg(yVector.last()).toAscii());
+		qDebug(QString("out of y-Range: bot = %1, p.y = %2, top = %3").arg(yVector.first()).arg(p.y()).arg(yVector.last()).toLatin1());
 		return 0;
 	}
 
@@ -1535,8 +1583,8 @@ void GerberReader::initPerspectiveTransform()
 	P_CAD.init(8, 2.0,120.0,110.0,2.0, -1.0,3.0,130.0,149.0);
 	P_CNC.init(8, 2.0,120.209,110.137,2.0, -1.625,2.491,130.049,149.0);
 
-	qDebug(("P_CAD = " + P_CAD.toString()).toAscii());
-	qDebug(("P_CNC = " + P_CNC.toString()).toAscii());
+	qDebug(("P_CAD = " + P_CAD.toString()).toLatin1());
+	qDebug(("P_CNC = " + P_CNC.toString()).toLatin1());
 
 	for(int row=0; row<4; row++){
 		M(row,0) = P_CAD(row,0);
@@ -1549,7 +1597,7 @@ void GerberReader::initPerspectiveTransform()
 	// k = M^-1*P_CNC
 
 	k = M.inv() * P_CNC;
-	qDebug(("k = " + k.toString()).toAscii());
+	qDebug(("k = " + k.toString()).toLatin1());
 }
 
 // Transforms a CAD-Point into a CNC-Point for exporting drill coordinates.

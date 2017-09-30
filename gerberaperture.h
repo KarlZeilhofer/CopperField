@@ -28,7 +28,7 @@ public:
 
 
 public:
-	GerberAperture(){};
+	GerberAperture(){}
 	GerberAperture(int id, enum Type type, qreal sizeX, qreal sizeY)
 	{
 		this->id = id;

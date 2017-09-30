@@ -4,7 +4,7 @@
 #include <QPointF>
 #include "scene.h"
 #include <cmath>
-#include <QtGui>
+#include <QtWidgets>
 
 
 

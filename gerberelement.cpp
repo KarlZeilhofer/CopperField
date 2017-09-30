@@ -2,6 +2,7 @@
 #include <QGraphicsPathItem>
 #include <QBrush>
 #include <QPen>
+#include <qdebug.h>
 
 GerberElement::GerberElement(GerberAperture ap)
 {
@@ -15,6 +16,11 @@ QGraphicsPathItem* GerberElement::getItem()
 		QGraphicsPathItem* item=0;
 
 		switch(elementType){
+		case Outline:
+		{
+			// TODO 3: elementType Outline implementieren
+			qDebug() << "Info: Unsupported Element Type: Outline";
+		}break;
 		case Polygon:
 		{
 			QPainterPath p;
@@ -36,12 +42,18 @@ QGraphicsPathItem* GerberElement::getItem()
 			p.translate(at(0));
 			item = new QGraphicsPathItem(p);
 		}break;
-			// TODO: outline implementieren
-
+		default:
+			qDebug() << QString("Error: unhandled Element Type: ") <<  (int)elementType;
 		}
 
-		item->setPen(QPen(color));
-		item->setBrush(QBrush(color));
+		if(item){
+			QPen p;
+			p.setColor(color);
+			p.setWidth(0);
+			item->setPen(p);
+
+			item->setBrush(QBrush(color));
+		}
 		graphicsItem = item;
 	}
 
@@ -63,7 +75,7 @@ void GerberElement::highlight(bool flag)
 }
 
 
-// TODO: check if there is a better way to get the points out of this class
+// TODO 5: check if there is a better way to get the points out of this class
 QPolygonF GerberElement::polygon()
 {
 	QPolygonF p;

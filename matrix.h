@@ -62,6 +62,7 @@ class Matrix
 {
 private:
 	double ** data;
+	double *_dataBlock;
 	int _rows;
 	int _columns;
 

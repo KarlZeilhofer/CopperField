@@ -11,12 +11,14 @@ GCodeSettings::GCodeSettings(QWidget *parent) :
 
     ui->lineEdit_drillDepth->setText(QString::number(-2.1));
     ui->lineEdit_drillPlungeFeedrate->setText(QString::number(1.0));
-    ui->lineEdit_millDiameter->setText(QString::number(0.525));
+	ui->lineEdit_millDiameter->setText(QString::number(0.25));
     ui->lineEdit_millFeedrate->setText(QString::number(5.0));
     ui->lineEdit_millPlungeFeedrate->setText(QString::number(2.0));
     ui->lineEdit_millZDepth->setText(QString::number(-0.1));
     ui->lineEdit_zClearance->setText(QString::number(1.0));
 	updateValuesFromTextfields();
+
+	qDebug() << "new GCodeSettings";
 }
 
 GCodeSettings::~GCodeSettings()

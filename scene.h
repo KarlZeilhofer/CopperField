@@ -10,8 +10,7 @@ class GridItem;
  * Sie beinhaltet alle Zeichenobjekte und besitzt ein vom Bildschirm unabhängiges
  * Koordinatensystem.
  * Dargestellt wird Scene mit der Klasse View.
- * TODO: Speichern und laden von Zeichnungen.
- * TODO: Layer-Implementierung
+ * TODO 5: Layer-Implementierung
  */
 
 class Scene : public QGraphicsScene

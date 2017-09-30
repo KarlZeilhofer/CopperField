@@ -1,6 +1,6 @@
 #include "netsviewer.h"
 #include "netlistwidget.h"
-#include <QtGui>
+#include <QtWidgets>
 #include "gerberelement.h"
 
 NetsViewer::NetsViewer(QWidget *parent) :

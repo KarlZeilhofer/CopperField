@@ -18,7 +18,11 @@ GridItem::GridItem(QGraphicsItem * parent = 0) :
 
 void GridItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
 		QWidget *widget) {
-	painter->setPen(Qt::darkGray);
+
+	QPen pen;
+	pen.setColor(Qt::darkGray);
+	pen.setWidth(0);
+	painter->setPen(pen);
 
 	//return immediately if grid is too small on the screen
 	if (scene()->views()[0]->matrix().m11() * spacing() < MIN_GRID_SPACING)

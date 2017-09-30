@@ -13,12 +13,15 @@ int Matrix::getActiveInstances()
 Matrix::~Matrix()
 {
 	// free memory
-	if(data)
+	if(_dataBlock)
 	{
-		delete [] data[0];
+		delete [] _dataBlock;
+		_dataBlock = NULL;
 	}
-	delete [] data;
-	data = NULL;
+	if(data){
+		delete [] data;
+		data = NULL;
+	}
 	activeInstances-=1;
 }
 
@@ -26,6 +29,8 @@ Matrix::Matrix()
 {
 	_rows=0;
 	_columns=0;
+	_dataBlock = 0;
+	data = 0;
 	activeInstances++;
 }
 
@@ -34,9 +39,9 @@ Matrix::Matrix(int rows, int columns)
 	this->_rows = rows;
 	this->_columns = columns;
 	data = new double*[rows];
-	double *temp = new double[rows*columns];
+	_dataBlock = new double[rows*columns];
 	for(int i=0; i<rows; i++){
-		data[i]=temp+i*columns;
+		data[i]=_dataBlock+i*columns;
 	}
 	activeInstances++;
 }
@@ -49,7 +54,8 @@ Matrix::Matrix(double start, double inc, double end)
 {
 	int n = (end-start)/inc + 1;
 	data = new double*;
-	data[0]=new double[n];
+	_dataBlock=new double[n];
+	data[0] = _dataBlock;
 
 	_rows = 1;
 	_columns = n;
@@ -67,9 +73,9 @@ Matrix::Matrix(const Matrix& source)
 	:_rows(source._rows), _columns(source._columns)
 {
 	data = new double*[_rows];
-	double *temp = new double[_rows*_columns];
+	_dataBlock = new double[_rows*_columns];
 	for(int i=0; i<_rows; i++){
-		data[i]=temp+i*_columns;
+		data[i]=_dataBlock+i*_columns;
 	}
 	std::copy(source.data[0], &(source.data[0][_rows*_columns]), data[0]); // deep copy
 	activeInstances++;

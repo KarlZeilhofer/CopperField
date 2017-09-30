@@ -11,7 +11,6 @@ NetListWidget::NetListWidget(QWidget *parent) :
 void NetListWidget::contextMenuEvent ( QContextMenuEvent * e )
 {
 	int row = currentRow();
-	// TODO: kontext menü anzeigen.
 
 	QMenu* cm = new QMenu(this); // context menu
 
@@ -24,11 +23,11 @@ void NetListWidget::contextMenuEvent ( QContextMenuEvent * e )
 void NetListWidget::dontMillCklicked()
 {
 	qDebug("don't mill clicked");
-	// TODO: forward this slot to the netsviewer
+	// TODO 2: forward this slot to the netsviewer
 }
 
 void NetListWidget::centralMillCklicked()
 {
 	qDebug("central mill clicked");
-	// TODO: forward this slot to the netsviewer
+	// TODO 2: forward this slot to the netsviewer
 }

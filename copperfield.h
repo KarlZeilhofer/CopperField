@@ -1,7 +1,7 @@
 #ifndef COPPERFIELD_H
 #define COPPERFIELD_H
 
-#include <QtGui/QMainWindow>
+#include <QtWidgets/QMainWindow>
 #include <QDir>
 #include <QVector>
 #include <QGraphicsItem>
@@ -61,7 +61,7 @@ public:
 
 //	QPointF getNormalUnityVector(const QPointF& p);
 
-	QLabel coordinateText;
+	QLabel statusText;
 
 	GCodeSettings gCodeSettings;
 	DialogLayers layerSettings;

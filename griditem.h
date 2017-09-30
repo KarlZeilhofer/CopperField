@@ -9,7 +9,7 @@
 
 #include <QGraphicsItem>
 
-// TODO: SIGNAL-SLOT für viewScale implementieren!!!!
+// TODO 5: SIGNAL-SLOT für viewScale implementieren!!!!
 class GridItem : public QGraphicsItem
 {
 public:

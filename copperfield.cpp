@@ -7,7 +7,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QStatusBar>
-#include <QtGui>
+#include <QtWidgets>
 #include <QToolBar>
 
 #include "copperfield.h"
@@ -25,9 +25,9 @@
 
   Dieses Programm liest mehrere Gerberdatein, produziert von Kicad, ein, und stellt diese am
   Bildschirm dar. Die Layer-Zuordnung erfolgt durch die Datei-Endung.
-	gtl -> Top
-	gbl	-> Bottom
-	gbr -> Contours
+	gtl oder t.cu.gbr -> Top
+	gbl	oder b.cu.gbr -> Bottom
+	gbr oder edge.cuts.gbr -> Contours
 	drl -> Drill
 
   Gleichzeitig werden die einzelnen Linien zu Netzen zusammengefasst. Ausgenommen Texte.
@@ -37,13 +37,18 @@
   vergrößert ist. Dann wir daraus die Fräsbahn berechnet.
   Texte werden direkt gefräst, und nicht freigestellt.
 
-  Zum fräsen selbst muss eine Oberflächen-Kompensation verwendet werden, um eine konstante
+  Zum fräsen selbst kann eine Oberflächen-Kompensation verwendet werden, um eine konstante
   Eintauchtiefe zu erreichen.
-
 */
 
-/* TODO:
- * Cutter Diameter wird aus gerberSettings nicht übernommen... k.A. warum.
+/*
+ * Major Todos:
+ * TODO 1: Cutter Diameter wird aus gerberSettings nicht übernommen... k.A. warum.
+ *		Jeder GerberReader hat seinen eigenen GCode-Settings Dialog, warum eigentlich?
+ * TODO 1: new doesn't work properly
+ * TODO 1: clearing the drawing doesn't work
+ * TODO 1: clear milling paths doesn't do anything
+ * TODO 0: crash on save-button click
  */
 
 
@@ -66,7 +71,9 @@ CopperField::CopperField(QWidget *parent)
 
 	netsViewer = new NetsViewer(this);
 	addDockWidget(Qt::LeftDockWidgetArea, netsViewer, Qt::Vertical);
-	statusBar()->addPermanentWidget(&coordinateText, 1);
+
+	statusText.setFont(QFont("Courier", 12));
+	statusBar()->addPermanentWidget(&statusText, 1);
 
     createActions();
     createMenus();
@@ -99,41 +106,50 @@ void CopperField::newFile()
 
 	netsViewer->clear();
 
-	delete(gerberTop);
-	delete(gerberBot);
-	delete(gerberDrill);
-	delete(gerberContour);
+	if(gerberTop){
+		delete(gerberTop);
+		gerberTop = 0;
+	}
+	if(gerberBot){
+		delete(gerberBot);
+		gerberBot = 0;
+	}
+	if(gerberDrill){
+		delete(gerberDrill);
+		gerberDrill = 0;
+	}
+	if(gerberContour){
+		delete(gerberContour);
+		gerberContour = 0;
+	}
 }
 
 void CopperField::open()
 {
-//    if (maybeSave()) {
-//        QString fileName = QFileDialog::getOpenFileName(this);
-//        if (!fileName.isEmpty())
-//            loadFile(fileName);
-
-//    }
 	curFile = QFileDialog::getOpenFileName(this,
 		 tr("Open Gerber/Drill File"), curDir.absolutePath(), tr("Gerber Files (*.gtl *.gbl *.gbr *.drl)"));
 
 	QFileInfo f(curFile);
 	curDir.setPath(f.absolutePath());
 
-	qDebug(f.suffix().toAscii());
+	qDebug() << f.suffix();
 
 
 	GerberReader* gr = 0;
-	if(f.suffix().toLower() == "gbl"){ // bottom layer
+	if(f.suffix().toLower() == "gbl" ||
+			f.fileName().toLower().endsWith("b.cu.gbr")){ // bottom layer
 		gerberBot = new GerberReader(curFile, QColor(50,155,50, alpha)); // just display the gerber drawing, by adding the elements to the scene
 		gr = gerberBot;
 		layerSettings.setGerberReader(LayerWidget::BOT, gr);
 		layerSettings.setGerberReader(LayerWidget::BOT_MILL, gr);
-	}else if(f.suffix().toLower() == "gtl"){ // top layer
+	}else if(f.suffix().toLower() == "gtl" ||
+			 f.fileName().toLower().endsWith("f.cu.gbr")){ // top layer
 		gerberTop = new GerberReader(curFile,QColor(155,50,50, alpha)); // just display the gerber drawing, by adding the elements to the scene
 		gr = gerberTop;
 		layerSettings.setGerberReader(LayerWidget::TOP, gr);
 		layerSettings.setGerberReader(LayerWidget::TOP_MILL, gr);
-	}else if(f.suffix().toLower() == "gbr"){ // contour layer
+	}else if(f.suffix().toLower() == "gbr" ||
+			 f.fileName().toLower().endsWith("edge.cuts.gbr")){ // contour layer
 		gerberContour = new GerberReader(curFile, QColor(155,155,50, alpha)); // just display the gerber drawing, by adding the elements to the scene
 		gr = gerberContour;
 		layerSettings.setGerberReader(LayerWidget::CONTOUR, gr);
@@ -143,19 +159,19 @@ void CopperField::open()
 		gr = gerberDrill;
 		layerSettings.setGerberReader(LayerWidget::DRILLS, gr);
 	}else{
-		// unsupported file extension
+		qDebug() << "unsupported file extension";
 	}
 
 	if(gr){
 		qDebug("Adding GerberElements to the Scene...");
 		QVector<GerberElement*> elements = gr->elements();
 		//qDebug("got elements");
-		//qDebug(QString("size of elements: %1").arg(elements.size()).toAscii());
+		//qDebug(QString("size of elements: %1").arg(elements.size()).toLatin1());
 		for(int n=0; n<elements.size(); n++){
 
 			QGraphicsItem* item = elements.at(n)->getItem();
 			if(item){
-				//qDebug(QString("adding element #%1 to the scene").arg(n).toAscii());
+				qDebug(QString("adding element #%1 to the scene").arg(n).toLatin1());
 				view->scene->addItem(item);
 			}
 		}
@@ -180,9 +196,10 @@ void CopperField::open()
 void CopperField::about()
 {
     QMessageBox::about(this, tr("About Application"),
-                       tr("The <b>Application</b> example demonstrates how to "
-                          "write modern GUI applications using Qt, with a menu bar, "
-                          "toolbars, and a status bar."));
+					   tr("CopperField translates Gerber-Files into G-Code "
+						  "for milling and drilling on a CNC Machine. \n"
+						  "Written by Karl Zeilhofer, karl@zeilhofer.co.at \n"
+						  "Licensed under GPL 3"));
 }
 
 void CopperField::documentWasModified()
@@ -530,7 +547,7 @@ void CopperField::calculationFinished()
 	if(gerberCurrentlyProcessing){ // test for valid pointer
 		QVector<QGraphicsPathItem*> items;
 		items = gerberCurrentlyProcessing->getMillingGraphicItems();
-		qDebug(QString("Add %1 MillingPolygons to scene...").arg(items.size()).toAscii());
+		qDebug() << QString("Add %1 MillingPolygons to scene...").arg(items.size());
 		//add polygons to the scene
 		for(int n=0; n<items.size(); n++){
 			view->scene->addItem(items.at(n));
@@ -559,7 +576,7 @@ void CopperField::exportGCode()
 
 	GerberReader* gr = 0;
 
-	// TODO: show gcode-settings dialog before exporting
+	// TODO 4: show gcode-settings dialog before exporting
 
 	if(gCodeSettings.mirror()){
 		qDebug("export wird gespiegelt");
