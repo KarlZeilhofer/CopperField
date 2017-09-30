@@ -1,4 +1,5 @@
 # CopperField
+![Image](./CopperField.png)
 
 ## Purpose
 This software is used, to generate G-Code out of Gerber Files. 
