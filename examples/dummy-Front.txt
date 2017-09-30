@@ -1,0 +1,25 @@
+// G04 = Comments
+// every block ends with an asterisk
+
+G04 (created by PCBNEW-RS274X *(2011-12-28 BZR 3254)-stable) date 28/01/2012 16:56:33*
+G01* // Lineare interpolation
+G70* // using Inches (G71 = using Millimeters)
+G90* // using absolute Format
+%MOIN*% // MOde = inch
+G04 Gerber Fmt 3.4, Leading zero omitted, Abs format*
+%FSLAX34Y34*% // FormatSpecification; L=omitt Leading zeros (T=trailing); A=Absolute coordinates (I=incremental); Number precision for X-Axis: 3.4; Number precision for Y-Axis: 3.4
+G04 APERTURE LIST*
+%ADD10C,0.006000*% // ApertureDefinition; D-Code = 10; C=Circle; Diameter = 0.006 inches
+%ADD11R,0.062000X0.090000*% // ApertureDefinition; D-Code = 11; R=Rectangle; width = 0.062"; height = 0.09"
+%ADD12O,0.062000X0.090000*% // ApertureDefinition; D-Code = 12; O=Oval; width = 0.062; height = 0.09
+G04 APERTURE END LIST*
+G54D10* // G54=change aperture; to D-Code D10
+G54D11* // change aperture; to D11
+X52000Y-23500D03* // move to x=5.2 y=-2.35; D03 = flash the aperure here
+G54D12* // change aperture to D12
+X53000Y-23500D03* // move to x=5.3 y=-2.35; D03 = flash the aperure here
+X54000Y-23500D03* // move to x=5.4 y=-2.35; D03 = flash the aperure here
+X54000Y-20500D03* // move to x=5.4 y=-2.05; D03 = flash the aperure here
+X53000Y-20500D03* // move to x=5.3 y=-2.05; D03 = flash the aperure here
+X52000Y-20500D03* // move to x=5.2 y=-2.05; D03 = flash the aperure here
+M02* // M02=end of programm; every file must end with M02

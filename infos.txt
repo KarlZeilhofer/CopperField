@@ -1,0 +1,99 @@
+﻿
+Karl Zeilhofer 
+Projekt wiederaufgenommen am 18.12.2009
+
+Projekt von Qt-Creator in Eclipse importiert
+
+
+Für das Zeichnen von Grafik-Objekten sollte eine Statemachine eingeführt werden. 
+z.B. zum Zeichnen von einem Kreis:
+	Input={linke Maustaste, rechte Maustaste, ESC, STRG, SHIFT}
+	Output = {endgültiges Grafik-Objekt, Temporäres Grafik-Objekt}
+	
+
+2009 12 22:
+
+Ideensammlung für mögliche Zustände beim erstellen eines Grafik-Objekts:
+Vorgehensweise für verschiedene Objekte:
+Abkürzungen: LC-left click, P-point, PU-point with update, RC-right click, U-update, FIN-finish
+Circle2P
+	klick -> zentrum + radius setzen, add -> radius update bei mouseMove -> klick -> radius update -> fertig
+	LC: P + PU + add; LC:U :FIN
+Rechteck
+	klick -> P1 + P2 setzen, add -> P2 update bei mouseMove -> klick -> P2 update -> fertig
+	LC: P + PU + add; LC:U :FIN
+EllipseFFR
+	klick -> F1 setzen + F2 setzen/update, add -> klick -> F2 update + radius setzen/update bei mouseMove -> 
+		klick -> Radius update -> fertig
+	LC: P + PU + add; LC: U + PU; LC: U :FIN
+EllipseCR
+	klick -> Zentrum setzen + radius update bei mouseMove, add -> klick -> Radius update -> fertig
+	(Fadenkreuzachsen sind tangenten zur ellipse)
+	LC: P + PU + add; LC: U :FIN
+EllipseCRR
+	klick -> Zentrum setzen + Rx setzen/update bei mouseMove, add -> klick -> 
+		Rx update + Ry setzen/update bei mouseMove -> klick-> Ry update -> fertig
+	LC: P + PU + add; LC: U + PU; LC: U :FIN
+PolyLinie
+	klick -> P1 setzen + P2 setzen/update + add -> klick P2 update + P3 setzen/update bei mm -> 
+		klick -> ... -> rechtsklick Pn+1 update -> fertig
+	LC: P + PU + add; LC: U + PU; ...; LC: U + PU; RC: U :FIN
+
+Folgende Kategorien können zusammen gefasst werden:
+o	LC: P + PU + add :LC
+o	LC: U :FIN
+o 	LC: U + PU :LC
+o	LC: U + PU :RC: U
+o	RC: U :FIN
+
+
+
+
+
+
+
+
+27.12.2009
+Select eines QGraphicsItem:
+	Ein QGI kann ausgewählt und per Drag'n'Drop verschoben werden, wenn mit setFlags() entsprechende Flags gesetzt werden:
+		setFlag(QGraphicsItem::ItemIsMovable, true);
+	    setFlag(QGraphicsItem::ItemIsSelectable, true);
+	Mit STRG+Klick können mehrere Items selektiert werden. 
+	In QGraphicsView kann noch Ruberband selection aktiviert werden...
+	Drag'n'Drop muss noch das Raster beigebracht werden!
+	 
+	 
+	 
+	 
+30.12.2009
+Probeweise umstellen auf Qt 4.6
+	Performance ist noch schlechter geworden. --> Wieder Qt 4.5 Verwenden!
+	Ohne OpenGL läuft das Programm auch schneller!
+	Vergleiche hierfür das Chip-Demo!
+Select-Rahmen in Circle implementiert.
+
+
+
+1.1.2010
+Nun wird doch wieder Qt 4.6 verwendet. 
+	Mit OpenGL wird das Zeichnen merklich schneller. 
+	Durch 
+		setCacheMode(QGraphicsItem::DeviceCoordinateCache, QSize(rect.width(),rect.height()));
+	wird das zeichnen des Grids extrem beschleunigt!
+
+2.1.2010
+Gedanken zum Abspeichern/Laden einer Scene:
+	Methode in der Klsse Scene: loadFromFile() und writeToFile()
+	Vielleicht soll XML verwendet werden?
+	
+
+11.1.2010
+Testhalber DrawingItem MyRectangle implementiert. 
+	Soll zum Darstellen von CMYK-Maps dienen. 
+	Wirklich nur zum Ausprobieren, ohne Anwendungshintergrund. 
+	Ab jetzt Stürzt das Programm ab, wenn man ein großes Rechteck zeichnet, und dann hineinzoomt. Ab einem gewissen Zoom-Wert stürzt das Programm ab. 
+	Auch beim Zeichnen eines Kreises passiert das. 
+
+	
+	
+	
