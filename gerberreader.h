@@ -40,6 +40,9 @@ public:
 
 	void deleteMillingPolygons();
 
+	enum MillOption{MO_NoMill, MO_Isolate, MO_Engrave};
+	void setMillOption(int netId, MillOption option);
+
 
 
 private:
@@ -115,6 +118,7 @@ private:
 public:
 	QVector<GerberElement*> gElements; // all elements read from the gerber-file
 	QVector<QVector<GerberElement*>*> nets; // list of element-lists, each element-list represents a electrical net
+	QVector<MillOption> millOptions; // for each net
 };
 
 #endif // GERBERREADER_H

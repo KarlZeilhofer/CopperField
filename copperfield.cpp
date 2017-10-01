@@ -43,9 +43,17 @@
 
 /*
  * Major Todos:
+ * TODO 2: support Copper-Polygons
+ * TODO 2: detect overlapping nets and fuse them
+ *		This is an issue for tracks with improper start/endpoints
+ *		(visually they are connected, but the start/endpoints are not identiacl
+ *		between different tracks)
  * TODO 3: clean up G-Code Settings (now each GerberReader has its own SettingsDialog,
  *		which is not obvoius to the user)
  * TODO 3: color and delete buttons in layer settings dialog don't do anything
+ * TODO 3: proper implementation of mill-options.
+ *		* Options should be moved into Gerber-Element
+ *		* add option "Auto"
  * TODO 4: notification to user when export has been successfull
  * TODO 4: implement middle-mouse drag
  * TODO 4: save/load G-Code Settings
@@ -89,6 +97,9 @@ CopperField::CopperField(QWidget *parent)
 
 	connect(&layerSettings, SIGNAL(activeLayerChanged(LayerWidget::LayerType)),
 			this, SLOT(updateActiveLayer(LayerWidget::LayerType)));
+
+	connect(netsViewer, SIGNAL(optionChanged(int,GerberReader::MillOption)),
+			this, SLOT(updateMillOption(int,GerberReader::MillOption)));
 }
 
 CopperField::~CopperField()
@@ -601,6 +612,13 @@ void CopperField::updateActiveLayer(LayerWidget::LayerType layer)
 	}
 
 	updateNetsView();
+}
+
+void CopperField::updateMillOption(int netId, GerberReader::MillOption option)
+{
+	if(activeGerber){
+		activeGerber->setMillOption(netId, option);
+	}
 }
 
 void CopperField::calearMillingPaths(){

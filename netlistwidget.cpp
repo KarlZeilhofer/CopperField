@@ -14,20 +14,28 @@ void NetListWidget::contextMenuEvent ( QContextMenuEvent * e )
 
 	QMenu* cm = new QMenu(this); // context menu
 
-	cm->addAction("don't mill", this, SLOT(dontMillCklicked()));
-	cm->addAction("central mill", this, SLOT(dontMillCklicked()));
+	cm->addAction("No Mill", this, SLOT(noMillClicked()));
+	cm->addAction("Isolate", this, SLOT(noMillClicked()));
+	cm->addAction("Engrave", this, SLOT(noMillClicked()));
 	cm->exec(e->globalPos());
 }
 
 // SLOT:
-void NetListWidget::dontMillCklicked()
+void NetListWidget::noMillClicked()
 {
-	qDebug("don't mill clicked");
-	// TODO 2: forward this slot to the netsviewer
+	qDebug("no mill clicked");
+	emit optionChanged(currentRow(), GerberReader::MO_NoMill);
+
 }
 
-void NetListWidget::centralMillCklicked()
+void NetListWidget::isolateClicked()
 {
-	qDebug("central mill clicked");
-	// TODO 2: forward this slot to the netsviewer
+	qDebug("isolate clicked");
+	emit optionChanged(currentRow(), GerberReader::MO_Isolate);
+}
+
+void NetListWidget::engraveClicked()
+{
+	qDebug("engrave clicked");
+	emit optionChanged(currentRow(), GerberReader::MO_Engrave);
 }

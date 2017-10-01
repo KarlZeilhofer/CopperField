@@ -626,11 +626,13 @@ QVector<QPolygonF>* GerberReader::splitOutline(QPolygonF& p)
 void GerberReader::buildNetsByPoints()
 {
 	QVector<GerberElement*> elements;
+	nets.clear(); // TODO 5: memory leak?
+	millOptions.clear();
 
 	// filter out the copper items:
 	for(int n=0; n<gElements.size(); n++){
 		if(gElements.at(n)->elementType == GerberElement::Polygon ||
-				gElements.at(n)->elementType == GerberElement::Flash) // todo: expand it to outlines if needed.
+				gElements.at(n)->elementType == GerberElement::Flash) // TODO 5: support Gerber-Outlines if needed.
 			if(gElements.at(n)->aperture.id != 11){ // TODO 2: set text aperture in gui
 				elements.append(gElements.at(n));
 			}
@@ -666,6 +668,7 @@ void GerberReader::buildNetsByPoints()
 		baseNet->append(elements.first());
 		nets.append(baseNet);  // and put the first item from elements into it.
 		elements.remove(0); // remove this item from elements-list
+		millOptions.append(MO_Isolate); // default mill option is isolation
 
 //		QRectF r = baseItem->sceneBoundingRect();
 //		qDebug(QString("baseItem.boundingRect = (%1,%2,%3,%4)").arg(r.x()).arg(r.y()).arg(r.width()).arg(r.height()).toLatin1());
@@ -772,6 +775,9 @@ void GerberReader::calculateMillingPolygons(qreal offset)
 	qreal progress = 0;
 
 	for(int n=0; n<nets.size(); n++){ // for all nets
+		if(millOptions.at(n) == MO_NoMill){
+			continue;
+		}
 		net = nets.at(n);
 
 		QGraphicsScene s; // temporary scene for rendering
@@ -964,6 +970,7 @@ void GerberReader::calculateMillingPolygons(qreal offset)
 //	}
 
 	// Add milling Paths of the text-elements:
+	// TODO 2: use millOptions
 	for(int n=0; n<gElements.size(); n++){
 		if(gElements.at(n)->aperture.id==11 && gElements.at(n)->elementType!=GerberElement::Drill){
 			millingPolygons.append(gElements.at(n)->polygon());
@@ -1613,5 +1620,11 @@ void GerberReader::deleteMillingPolygons()
 		delete(i);
 	}
 	millingItems.clear();
+}
+
+void GerberReader::setMillOption(int netId, GerberReader::MillOption option)
+{
+	qDebug() << "Set Mill Option for net " << netId << " to " << option;
+	millOptions[netId] = option;
 }
 

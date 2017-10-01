@@ -4,6 +4,7 @@
 #include <QDockWidget>
 #include <QVector>
 #include <QGraphicsItem>
+#include "gerberreader.h"
 
 class NetListWidget;
 class GerberElement;
@@ -17,9 +18,11 @@ public:
 	void clear(); // clear the list
 
 signals:
+	void optionChanged(int netId, GerberReader::MillOption option);
 
 public slots:
 	void selectNet(int net);
+	void setOption(int netId, GerberReader::MillOption option);
 
 private:
 	NetListWidget* listWidget;

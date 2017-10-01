@@ -54,6 +54,7 @@ private slots:
 public slots:
 	void calculationFinished();
 	void updateActiveLayer(LayerWidget::LayerType layer);
+	void updateMillOption(int netId, GerberReader::MillOption option);
 
 public:
 	static CopperField* app;

@@ -2,6 +2,7 @@
 #define NETLISTWIDGET_H
 
 #include <QListWidget>
+#include "gerberreader.h"
 
 class NetListWidget : public QListWidget
 {
@@ -14,11 +15,12 @@ protected:
 	void contextMenuEvent ( QContextMenuEvent * e );
 
 signals:
-
+	void optionChanged(int netId, GerberReader::MillOption option);
 
 public slots:
-	void dontMillCklicked();
-	void centralMillCklicked();
+	void noMillClicked();
+	void isolateClicked();
+	void engraveClicked();
 };
 
 #endif // NETLISTWIDGET_H

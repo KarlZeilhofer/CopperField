@@ -9,6 +9,9 @@ NetsViewer::NetsViewer(QWidget *parent) :
 	listWidget = new NetListWidget(this);
 	//setLayout(new QGridLayout(this));
 	setWidget(listWidget);
+
+	connect(listWidget, SIGNAL(optionChanged(int,GerberReader::MillOption)),
+			this, SLOT(setOption(int,GerberReader::MillOption)));
 }
 
 void NetsViewer::setNets(QVector<QVector<GerberElement*>*> list)
@@ -40,6 +43,11 @@ void NetsViewer::selectNet(int netID)
 	for(int n=0; n<net->size(); n++){
 		net->at(n)->highlight(true);
 	}
+}
+
+void NetsViewer::setOption(int netId, GerberReader::MillOption option)
+{
+	emit optionChanged(netId, option);
 }
 
 void NetsViewer::clear()
