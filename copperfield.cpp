@@ -43,10 +43,9 @@
 
 /*
  * Major Todos:
- * TODO 1: Cutter Diameter wird aus gerberSettings nicht übernommen... k.A. warum.
- *		Jeder GerberReader hat seinen eigenen GCode-Settings Dialog, warum eigentlich?
- *		Und nochdazu hat das Hauptfenster ebenfalls GCodeSettings!
  * TODO 3: show nets-list from activeGerber()
+ * TODO 3: clean up G-Code Settings (now each GerberReader has its own SettingsDialog,
+ *		which is not obvoius to the user)
  * TODO 3: color and delete buttons in layer settings dialog don't do anything
  * TODO 4: notification to user when export has been successfull
  * TODO 4: implement middle-mouse drag
@@ -56,7 +55,8 @@
 CopperField* CopperField::app = NULL;
 
 CopperField::CopperField(QWidget *parent)
-    : QMainWindow(parent)
+	: QMainWindow(parent),
+	  gerberTop(0), gerberBot(0), gerberDrill(0), gerberContour(0)
 {
     app = this;
 	yScale = -1; // redo the mirroring due to the monitor-coordinate system.
@@ -65,8 +65,6 @@ CopperField::CopperField(QWidget *parent)
     view = new View(this);
     setCentralWidget(view);
 
-	gCodeSettings.setVisible(false);
-	gCodeSettings.setParent(this, Qt::Tool);
 	layerSettings.setVisible(false);
 	layerSettings.setParent(this, Qt::Tool);
 
@@ -570,7 +568,6 @@ void CopperField::calculateMillingPaths(){
 		connect(gr, SIGNAL(calculaltionProgressed(QString,qreal)), &pss, SLOT(changeProgress(QString,qreal)), Qt::QueuedConnection);
 		connect(gr, SIGNAL(finished()), this, SLOT(calculationFinished()), Qt::QueuedConnection);
 		gerberCurrentlyProcessing = gr;
-		gr->setCutterRadius(gCodeSettings.millDiameter()/2);
 		qDebug("start calculation");
 		gr->start();
 	}
@@ -625,34 +622,29 @@ void CopperField::exportGCode()
 
 	// TODO 4: show gcode-settings dialog before exporting
 
-	if(gCodeSettings.mirror()){
-		qDebug("export wird gespiegelt");
-	}else{
-		qDebug("export wird NICHT gespiegelt");
-	}
 
 	switch(layerSettings.activeLayer()){
 	case LayerWidget::TOP_MILL:
 	case LayerWidget::TOP:
 	{
 		gr = gerberTop;
-		if(gr) gr->exportGCode(gCodeSettings.mirror());
+		if(gr) gr->exportGCode();
 	}break;
 	case LayerWidget::BOT_MILL:
 	case LayerWidget::BOT:
 	{
 		gr = gerberBot;
-		if(gr) gr->exportGCode(gCodeSettings.mirror()); // mirror bottom mills
+		if(gr) gr->exportGCode(); // mirror bottom mills
 	}break;
 	case LayerWidget::CONTOUR:
 	{
 		gr = gerberContour;
-		if(gr) gr->exportGCode(gCodeSettings.mirror()); // mill contours from the bottom side --> mirror
+		if(gr) gr->exportGCode(); // mill contours from the bottom side --> mirror
 	}break;
 	case LayerWidget::DRILLS:
 	{
 		gr = gerberDrill;
-		if(gr) gr->exportGCode(gCodeSettings.mirror()); // drill from bottom side, due to surface-probing
+		if(gr) gr->exportGCode(); // drill from bottom side, due to surface-probing
 	}break;
 	default:
 		qDebug("no active layer");

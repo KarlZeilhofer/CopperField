@@ -25,14 +25,12 @@ public:
 
 	void setLayerColor(QColor c);
 	QVector<GerberElement*> elements();
-	bool exportGCode(bool mirror);
+	bool exportGCode();
 	QVector<QPolygonF> getMillingPolygons();
 	void setVisible(bool flag);
 	void setMillPathsVisible(bool flag);
 	QVector<QGraphicsPathItem*> getMillingGraphicItems();
 	qreal getLengthOfMillingPaths();
-
-	void setCutterRadius(qreal cr);
 
 	void testInterpolation(); // biliniear
 
@@ -81,7 +79,6 @@ private:
 
 	QVector<QPolygonF> millingPolygons;
 	QVector<QGraphicsPathItem*> millingItems;
-	qreal millDiameter;
 
 
 	bool failed; // flag, if reading file failed
@@ -111,7 +108,6 @@ private:
 	int nElements;
 	bool outlineActive;
 	QPolygonF* curOL; // current outline (goes with outlineActive (G36/G37)
-	qreal cutterRadius;
 
 	// for perspective Transformation:
 	Matrix k;

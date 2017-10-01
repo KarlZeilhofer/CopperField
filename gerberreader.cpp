@@ -53,8 +53,6 @@ GerberReader::GerberReader(QString fileName, QColor c)
 	unitScale = 1; // default = mm
 	yScale = -1; // adoption between monitor and cad coordinate system
 
-	millDiameter = 0.1; // default size
-
 	nCoordinates=0;
 	nElements=0;
 	outlineActive = false;
@@ -750,12 +748,12 @@ QVector<GerberElement*> GerberReader::elements()
 
 	 transform the polygons into the original scene-coordinates
 	 add the polygons to millingPolygons
+
+	 TODO 5: make use of multiple CPUs by paralleling this task
   */
 void GerberReader::calculateMillingPolygons(qreal offset)
 {
 	millingPolygons.clear();
-	millDiameter = 2*offset;
-
 	bool dbg=true;
 
 	QVector<GerberElement*>* net; // currently processed net
@@ -983,7 +981,7 @@ void GerberReader::calculateMillingPolygons(qreal offset)
 QVector<QPolygonF> GerberReader::getMillingPolygons()
 {
 	if(millingPolygons.size() == 0){
-		calculateMillingPolygons(millDiameter/2);
+		calculateMillingPolygons(gCodeSettings.millDiameter()/2);
 		qDebug("using default cutter diameter of 0.25mm");
 	}
 	return millingPolygons;
@@ -992,9 +990,11 @@ QVector<QPolygonF> GerberReader::getMillingPolygons()
 
 // the output can be mirrored about the y-axis
 // --> invert all x-values
-bool GerberReader::exportGCode(bool mirror) // tODO: remove unsused parameter
+bool GerberReader::exportGCode() // tODO: remove unsused parameter
 {
-	bool doPerspectiveTransform = false; // todo: set this flag in GUI
+	bool mirror = gCodeSettings.mirror();
+
+	bool doPerspectiveTransform = false; // TODO 5: set this flag in GUI
 
 	qreal xMirrorScale=1;
 	if(gCodeSettings.mirror()){
@@ -1209,6 +1209,8 @@ void GerberReader::setVisible(bool flag)
 
 QVector<QGraphicsPathItem*> GerberReader::getMillingGraphicItems()
 {
+	qreal millDiameter = gCodeSettings.millDiameter();
+
 	if(millingPolygons.size()>0 && millingItems.size()==0){
 		millingItems.clear();
 		for(int p=0; p<millingPolygons.size(); p++){
@@ -1362,21 +1364,13 @@ QVector<QPolygonF> GerberReader::sortPaths(QVector<QPolygonF> input, bool spread
 // override run()
 void GerberReader::run()
 {
-	calculateMillingPolygons(cutterRadius);
+	calculateMillingPolygons(gCodeSettings.millDiameter()/2);
 	//exec();
 	qDebug("finished run()");
 	//exec();
 
 	// calling CopperField::calculationFinished() now
 }
-
-void GerberReader::setCutterRadius(qreal cr)
-{
-    qDebug() << __func__ << "(" << cr << ")";
-	cutterRadius = cr;
-    millDiameter = cr*2;
-}
-
 
 // TODO 4: Z-Map: dies sollte entweder gelöscht werden, oder in ein spezielles menü gepackt werden
 void GerberReader::loadZMap()

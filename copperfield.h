@@ -63,7 +63,7 @@ public:
 
 	QLabel statusText;
 
-	GCodeSettings gCodeSettings;
+	//GCodeSettings gCodeSettings;
 	DialogLayers layerSettings;
 
 private:
