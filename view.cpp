@@ -15,7 +15,9 @@
 
 View::View(QWidget* parent):QGraphicsView(parent)
 {
-	setRenderHints(QPainter::Antialiasing);
+	if(CopperField::app->useAntiAliasing){
+		setRenderHints(QPainter::Antialiasing);
+	}
 	setViewport(new QWidget());
 	setMouseTracking(true); // enable mouse tracking for positioning the cross hair
 	setViewportUpdateMode(QGraphicsView::FullViewportUpdate);

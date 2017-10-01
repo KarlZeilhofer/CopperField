@@ -15,8 +15,21 @@ The G-Code is used to drive a CNC-milling machine to isolate the copper tracks.
 
 
 ## Still in Pre-Alpha-State
-This programm is wirtten in Qt4 and is now in the process of porting it to Qt5. 
-Some Demos are working, but there are still heavy bugs and many TODOs. 
+Some Demos are working, but there are still many features missing. 
+
+### Whats already implemented
+* Load and display Gerber files for bottom and top layer
+* Load and display drill files
+* Isolate simple geometries (connected pads and tracks)
+* export proper G-code
+* option for mirroring before exporting
+
+### Whats really missing
+* Usable option for engraved/isolated/ignored
+* Polygon support
+* Improved element fusion to logical nets
+* Further many TODOs, please have a look into the source code
+* Proper outline milling
 
 If you have interest on this code, please contact me: karl@zeilhofer.co.at
 

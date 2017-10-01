@@ -69,7 +69,14 @@ CopperField::CopperField(QWidget *parent)
 {
     app = this;
 	yScale = -1; // redo the mirroring due to the monitor-coordinate system.
-	alpha = 128;
+
+	useAlphaColor = true;
+	useAntiAliasing = false;
+
+	if(useAlphaColor)
+		alpha = 128;
+	else
+		alpha = 255;
 
     view = new View(this);
     setCentralWidget(view);

@@ -115,6 +115,8 @@ private:
 	// for perspective Transformation:
 	Matrix k;
 
+	QVector<int> engraveApertureIDs;
+
 public:
 	QVector<GerberElement*> gElements; // all elements read from the gerber-file
 	QVector<QVector<GerberElement*>*> nets; // list of element-lists, each element-list represents a electrical net

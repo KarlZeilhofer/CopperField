@@ -29,7 +29,6 @@
 // and all electrical-nets in
 //		QVector<QVector<GerberElement*>*> nets; // list of element-lists, each element-list represents an electrical net
 // Gerber-Lines with the Aperture D11 are interpreted as Text.
-// TODO 4: allow other apertures to be defined as text by GUI
 
 // use the function start() to calculate the milling polygons.
 
@@ -38,8 +37,12 @@
 GerberReader::GerberReader(QString fileName, QColor c)
 {
 	bool brushOn=true;
-	int alpha = 128;
+
 	finishedElement = true;
+
+	//engraveApertureIDs.append(11); // TODO 2: set engrave aperture in gui
+
+
 	setLayerColor(c);
 
 	gCodeSettings.setWindowTitle(fileName.split('\\').last());
@@ -406,7 +409,7 @@ GerberReader::GerberReader(QString fileName, QColor c)
 						finishedElement = false;
 						curElement = new GerberElement(*curAp);
 						curElement->elementType = GerberElement::Polygon;
-						if(currentApertureID == 11){ // TODO 2: set this number in the gui!
+						if(engraveApertureIDs.contains(currentApertureID) ){
 							curElement->color = colorText;
 						}else{
 							curElement->color = colorLine;
@@ -631,7 +634,7 @@ void GerberReader::buildNetsByPoints()
 	for(int n=0; n<gElements.size(); n++){
 		if(gElements.at(n)->elementType == GerberElement::Polygon ||
 				gElements.at(n)->elementType == GerberElement::Flash) // TODO 5: support Gerber-Outlines if needed.
-			if(gElements.at(n)->aperture.id != 11){ // TODO 2: set text aperture in gui
+			if(!engraveApertureIDs.contains(gElements.at(n)->aperture.id) ){
 				elements.append(gElements.at(n));
 			}
 	}
@@ -967,7 +970,7 @@ void GerberReader::calculateMillingPolygons(qreal offset)
 	// Add milling Paths of the text-elements:
 	// TODO 2: use millOptions
 	for(int n=0; n<gElements.size(); n++){
-		if(gElements.at(n)->aperture.id==11 && gElements.at(n)->elementType!=GerberElement::Drill){
+		if(engraveApertureIDs.contains(gElements.at(n)->aperture.id) && gElements.at(n)->elementType!=GerberElement::Drill){
 			millingPolygons.append(gElements.at(n)->polygon());
 		}
 
@@ -1224,7 +1227,13 @@ QVector<QGraphicsPathItem*> GerberReader::getMillingGraphicItems()
 			negative.setRed(255-color.red());
 			negative.setGreen(255-color.green());
 			negative.setBlue(255-color.blue());
-			negative.setAlpha(200);
+
+			if(color.alpha() < 255)
+				negative.setAlpha(200);
+			else
+				negative.setAlpha(255);
+
+
 
 			QPen pen;
 			pen.setColor(negative);

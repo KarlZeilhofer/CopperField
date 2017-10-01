@@ -68,6 +68,9 @@ public:
 	//GCodeSettings gCodeSettings;
 	DialogLayers layerSettings;
 
+	bool useAlphaColor; // TODO 5: make available to GUI
+	bool useAntiAliasing; // TODO 5: make available to GUI
+
 private:
 	qreal yScale;
 	int alpha; // opacity
