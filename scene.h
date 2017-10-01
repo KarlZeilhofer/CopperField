@@ -27,7 +27,7 @@ private:
 	bool snapOn;
 
 public:
-	QRectF boundingRect;
+	QRectF boundingRect();
 };
 
 #endif // SCENE_H

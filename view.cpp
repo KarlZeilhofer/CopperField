@@ -114,7 +114,9 @@ void View::updateCoordinates()
 // slot:
 void View::zoomAll()
 {
-	fitInView(scene->boundingRect, Qt::KeepAspectRatio);
+	fitInView(scene->boundingRect(), Qt::KeepAspectRatio);
+
+	qDebug() << scene->boundingRect();
 }
 
 

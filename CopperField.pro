@@ -44,3 +44,6 @@ SOURCES += copperfield.cpp \
            scene.cpp \
            view.cpp
 RESOURCES += copperfield.qrc
+
+DISTFILES += \
+    README.md

@@ -1004,8 +1004,8 @@ bool GerberReader::exportGCode(bool mirror) // tODO: remove unsused parameter
 	if(hasMills){
 
 		// load zMap,xVector,yVector
-		qDebug("using zMap correction!");
-		loadZMap();
+		// qDebug("using zMap correction!");
+		// loadZMap(); // TODO 4: use Z-Map Corrections again, write GUI elements for it!
 
 		qreal idealZ = gCodeSettings.millZDepth();
 
@@ -1487,6 +1487,9 @@ void GerberReader::testInterpolation()
 qreal GerberReader::interpolateMap(QPointF p)
 {
 	// get the four neighbour Points and indizes
+	if(xVector.isEmpty() || yVector.isEmpty()){
+		return 0;
+	}
 
 	if(p.x() < xVector.first() || p.x() > xVector.last()){
 		qDebug(QString("out of x-Range: left = %1, p.x = %2, right = %3").arg(xVector.first()).arg(p.x()).arg(xVector.last()).toLatin1());

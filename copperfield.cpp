@@ -49,8 +49,7 @@
  * TODO 1: new doesn't work properly
  * TODO 1: clearing the drawing doesn't work
  * TODO 1: clear milling paths doesn't do anything
- * TODO 0: crash on save-button click
- * TODO 0: export crashes the application
+ * TODO 4: notification to user when export has been successfull
  */
 
 

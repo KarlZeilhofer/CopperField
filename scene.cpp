@@ -37,4 +37,20 @@ QPointF Scene::snapToGrid(QPointF p) const
 	}
 }
 
+QRectF Scene::boundingRect()
+{
+	QRectF bb;
+
+	int n=0;
+	foreach(QGraphicsItem* i,items()){
+		if(n>0){ // skip cross hair // TODO 5: replace this dirty hack
+			QRectF ri = i->boundingRect();
+			bb = bb.united(ri);
+		}
+		n++;
+	}
+
+	return bb;
+}
+
 
