@@ -40,6 +40,8 @@ public:
 	void initPerspectiveTransform();
 	QPointF perspectiveTransform(QPointF pCAD);
 
+	void deleteMillingPolygons();
+
 
 
 private:

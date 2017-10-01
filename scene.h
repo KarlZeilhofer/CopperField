@@ -28,6 +28,7 @@ private:
 
 public:
 	QRectF boundingRect();
+	void clearAllButCrosshair();
 };
 
 #endif // SCENE_H

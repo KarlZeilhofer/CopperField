@@ -46,10 +46,10 @@
  * TODO 1: Cutter Diameter wird aus gerberSettings nicht übernommen... k.A. warum.
  *		Jeder GerberReader hat seinen eigenen GCode-Settings Dialog, warum eigentlich?
  *		Und nochdazu hat das Hauptfenster ebenfalls GCodeSettings!
- * TODO 1: new doesn't work properly
- * TODO 1: clearing the drawing doesn't work
- * TODO 1: clear milling paths doesn't do anything
+ * TODO 3: show nets-list from activeGerber()
+ * TODO 3: color and delete buttons in layer settings dialog don't do anything
  * TODO 4: notification to user when export has been successfull
+ * TODO 4: implement middle-mouse drag
  */
 
 
@@ -104,6 +104,10 @@ void CopperField::newFile()
 //        //textEdit->clear();
 //        setCurrentFile("");
 //    }
+
+	layerSettings.resetDialog();
+
+	view->scene->clearAllButCrosshair();
 
 	netsViewer->clear();
 
@@ -250,7 +254,7 @@ void CopperField::createActions()
 
 	// Process:
 	clearMillingPathsAct = new QAction(tr("Clear Mill Paths"), this);
-	clearMillingPathsAct->setStatusTip(tr("Use the current G-Code Settings, and calculate all milling paths"));
+	clearMillingPathsAct->setStatusTip(tr("Remove milling paths from current layer"));
 	//clearMillingPathsAct->setShortcut(Qt::Key_M);
 	connect(clearMillingPathsAct, SIGNAL(triggered()), this, SLOT(calearMillingPaths()));
 
@@ -445,7 +449,37 @@ void CopperField::setCurrentFile(const QString &fileName)
 
 QString CopperField::strippedName(const QString &fullFileName)
 {
-    return QFileInfo(fullFileName).fileName();
+	return QFileInfo(fullFileName).fileName();
+}
+
+GerberReader *CopperField::activeGerber()
+{
+	GerberReader* gr = 0;
+
+	switch(layerSettings.activeLayer()){
+	case LayerWidget::TOP:
+	case LayerWidget::TOP_MILL:
+	{
+		gr = gerberTop;
+	}break;
+	case LayerWidget::BOT:
+	case LayerWidget::BOT_MILL:
+	{
+		gr = gerberBot;
+	}break;
+	case LayerWidget::CONTOUR:
+	{
+		gr = gerberContour;
+	}break;
+	case LayerWidget::DRILLS:
+	{
+		gr = gerberDrill;
+	}break;
+	default:
+		qDebug("no active layer");
+	}
+
+	return gr;
 }
 
 
@@ -562,12 +596,24 @@ void CopperField::calculationFinished()
 	}
 }
 
-// TODO!
 void CopperField::calearMillingPaths(){
-//	for(int n=0; n<millingPolygons->size(); n++){
-//		delete(millingPolygons->at(n));
-//	}
-//	delete(millingPolygons);
+	foreach(QGraphicsPathItem* i, activeGerber()->getMillingGraphicItems()){
+		view->scene->removeItem(i);
+	}
+
+	activeGerber()->deleteMillingPolygons();
+
+	LayerWidget::LayerType l = layerSettings.activeLayer();
+	if(l == LayerWidget::BOT || l == LayerWidget::BOT_MILL){
+		layerSettings.setActiveLayer(LayerWidget::BOT);
+		layerSettings.disableLayerWidget(LayerWidget::BOT_MILL);
+	}
+	if(l == LayerWidget::TOP || l == LayerWidget::TOP_MILL){
+		layerSettings.setActiveLayer(LayerWidget::TOP);
+		layerSettings.disableLayerWidget(LayerWidget::TOP_MILL);
+	}
+
+	// TODO 4: for countours
 }
 
 

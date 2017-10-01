@@ -44,6 +44,44 @@ void DialogLayers::setGerberReader(LayerWidget::LayerType layer, GerberReader* g
 	dynamic_cast<LayerWidget*>(bg.button(layer)->parent())->setActive(gr);
 }
 
+void DialogLayers::resetDialog()
+{
+	ui->layerWidget_bot->setEnabled(false);
+	ui->layerWidget_botMill->setEnabled(false);
+	ui->layerWidget_top->setEnabled(false);
+	ui->layerWidget_topMill->setEnabled(false);
+	ui->layerWidget_contour->setEnabled(false);
+	ui->layerWidget_contourMill->setEnabled(false);
+	ui->layerWidget_drill->setEnabled(false);
+}
+
+void DialogLayers::disableLayerWidget(LayerWidget::LayerType layer)
+{
+	switch(layer){
+	case LayerWidget::BOT:
+		ui->layerWidget_bot->setEnabled(false);
+		break;
+	case LayerWidget::BOT_MILL:
+		ui->layerWidget_botMill->setEnabled(false);
+		break;
+	case LayerWidget::TOP:
+		ui->layerWidget_top->setEnabled(false);
+		break;
+	case LayerWidget::TOP_MILL:
+		ui->layerWidget_topMill->setEnabled(false);
+		break;
+	case LayerWidget::CONTOUR:
+		ui->layerWidget_contour->setEnabled(false);
+		break;
+	case LayerWidget::CONTOUR_MILL:
+		ui->layerWidget_contourMill->setEnabled(false);
+		break;
+	case LayerWidget::DRILLS:
+		ui->layerWidget_drill->setEnabled(false);
+		break;
+	}
+}
+
 LayerWidget::LayerType DialogLayers::activeLayer()
 {
 	return (LayerWidget::LayerType)(bg.checkedId());

@@ -21,6 +21,8 @@ public:
 
 	void setActiveLayer(LayerWidget::LayerType layer);
 	void setGerberReader(LayerWidget::LayerType layer, GerberReader* gr);
+	void resetDialog();
+	void disableLayerWidget(LayerWidget::LayerType layer);
 
 	LayerWidget::LayerType activeLayer();
 

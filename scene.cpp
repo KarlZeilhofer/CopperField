@@ -53,4 +53,15 @@ QRectF Scene::boundingRect()
 	return bb;
 }
 
+void Scene::clearAllButCrosshair()
+{
+	int n=0;
+	foreach(QGraphicsItem* i,items()){
+		if(n>0){ // skip cross hair // TODO 5: replace this dirty hack
+			removeItem(i);
+		}
+		n++;
+	}
+}
+
 

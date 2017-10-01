@@ -1611,3 +1611,13 @@ QPointF GerberReader::perspectiveTransform(QPointF pCAD)
 	return QPointF(x,y);
 }
 
+void GerberReader::deleteMillingPolygons()
+{
+	millingPolygons.clear();
+
+	foreach(QGraphicsPathItem* i, millingItems){
+		delete(i);
+	}
+	millingItems.clear();
+}
+

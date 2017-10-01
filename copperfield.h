@@ -90,6 +90,7 @@ private:
 	GerberReader* gerberBot; // bottom layer for copper and text
 	GerberReader* gerberDrill; // drill layer
 	GerberReader* gerberContour; // contour mill layer
+	GerberReader* activeGerber(); // currently selected gerber, set by the layer dialog
 	GerberReader* gerberCurrentlyProcessing; // this pointer is used for the calculating milling paths in a thread
 	ProgressSplashScreen pss;
 
