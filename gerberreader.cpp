@@ -521,8 +521,6 @@ GerberReader::GerberReader(QString fileName, QColor c)
 	gCodeSettings.show();
 }
 
-// TODO 0: app crashes on delete!!
-// kann nicht mehr nachvollzogen werden...
 GerberReader::~GerberReader()
 {
 	// delete all allocated objects:
@@ -710,9 +708,6 @@ void GerberReader::buildNetsByPoints()
 	//cleanOutlinePathNets(); // TODO 4 cleanOutlinePathNets
 
 	qDebug(QString("Fused %1 elements to %2 different nets!").arg(numElements).arg(nets.size()).toLatin1());
-
-	// TODO 1: make netsViewer threadsave! (was ist hier genau gemeint?
-	//CopperField::app->netsViewer->setNets(nets);
 }
 
 
@@ -809,7 +804,7 @@ void GerberReader::calculateMillingPolygons(qreal offset)
 
 		QPainter painter(&image);
 
-		s.render(&painter, eRP, eR); // TODO 0: there are artefacts in the images: muss geprüft werden!
+		s.render(&painter, eRP, eR);
 
 		//convert to black/white:
 		QImage imBW(image.size(), QImage::Format_RGB32);
@@ -1234,7 +1229,7 @@ QVector<QGraphicsPathItem*> GerberReader::getMillingGraphicItems()
 			QPen pen;
 			pen.setColor(negative);
 			//pen.setWidth(0); // used for geometry analysis
-			pen.setWidthF(millDiameter); // TODO 1: set correct line width
+			pen.setWidthF(millDiameter);
 			pen.setStyle(Qt::SolidLine);
 			pen.setCapStyle(Qt::RoundCap);
 			pen.setJoinStyle(Qt::RoundJoin);
