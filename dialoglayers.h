@@ -26,9 +26,11 @@ public:
 
 	LayerWidget::LayerType activeLayer();
 
+signals:
+	void activeLayerChanged(LayerWidget::LayerType layer);
 
 private slots:
-
+	void emitActiveLayer(int buttonId);
 
 private:
     Ui::DialogLayers *ui;

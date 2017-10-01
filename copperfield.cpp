@@ -33,7 +33,7 @@
   Gleichzeitig werden die einzelnen Linien zu Netzen zusammengefasst. Ausgenommen Texte.
   Anschließend kann man Fräskonturen berechnen lassen, die als G-Code exportiert werden.
   Dies geschieht, indem jedes einzelne Netz in eine Pixelgraphik gerendert wird, und daraus
-  mit einer Dillate-Pixel-Operation eine Grafik erzeugt wird, die an den konturen um den halben fräserdurchmesser
+  mit einer Dilate-Pixel-Operation eine Grafik erzeugt wird, die an den konturen um den halben fräserdurchmesser
   vergrößert ist. Dann wir daraus die Fräsbahn berechnet.
   Texte werden direkt gefräst, und nicht freigestellt.
 
@@ -43,12 +43,12 @@
 
 /*
  * Major Todos:
- * TODO 3: show nets-list from activeGerber()
  * TODO 3: clean up G-Code Settings (now each GerberReader has its own SettingsDialog,
  *		which is not obvoius to the user)
  * TODO 3: color and delete buttons in layer settings dialog don't do anything
  * TODO 4: notification to user when export has been successfull
  * TODO 4: implement middle-mouse drag
+ * TODO 4: save/load G-Code Settings
  */
 
 
@@ -56,7 +56,8 @@ CopperField* CopperField::app = NULL;
 
 CopperField::CopperField(QWidget *parent)
 	: QMainWindow(parent),
-	  gerberTop(0), gerberBot(0), gerberDrill(0), gerberContour(0)
+	  gerberTop(0), gerberBot(0), gerberDrill(0), gerberContour(0),
+	  activeGerber(0), activeLayer(LayerWidget::NONE)
 {
     app = this;
 	yScale = -1; // redo the mirroring due to the monitor-coordinate system.
@@ -85,6 +86,9 @@ CopperField::CopperField(QWidget *parent)
 //            this, SLOT(documentWasModified()));
 
     setCurrentFile("");
+
+	connect(&layerSettings, SIGNAL(activeLayerChanged(LayerWidget::LayerType)),
+			this, SLOT(updateActiveLayer(LayerWidget::LayerType)));
 }
 
 CopperField::~CopperField()
@@ -189,8 +193,9 @@ void CopperField::open()
 		sr.setWidth(w*k);
 		sr.setHeight(h*k);
 		view->scene->setSceneRect(sr);
-
 		view->zoomAll();
+		activeGerber = gr;
+		updateNetsView();
 	}
 }
 
@@ -450,40 +455,12 @@ QString CopperField::strippedName(const QString &fullFileName)
 	return QFileInfo(fullFileName).fileName();
 }
 
-GerberReader *CopperField::activeGerber()
+void CopperField::updateNetsView()
 {
-	GerberReader* gr = 0;
-
-	switch(layerSettings.activeLayer()){
-	case LayerWidget::TOP:
-	case LayerWidget::TOP_MILL:
-	{
-		gr = gerberTop;
-	}break;
-	case LayerWidget::BOT:
-	case LayerWidget::BOT_MILL:
-	{
-		gr = gerberBot;
-	}break;
-	case LayerWidget::CONTOUR:
-	{
-		gr = gerberContour;
-	}break;
-	case LayerWidget::DRILLS:
-	{
-		gr = gerberDrill;
-	}break;
-	default:
-		qDebug("no active layer");
+	if(activeGerber){
+		netsViewer->setNets(activeGerber->nets);
 	}
-
-	return gr;
 }
-
-
-
-
-
 
 
 
@@ -590,15 +567,53 @@ void CopperField::calculationFinished()
 
 		gerberCurrentlyProcessing = 0; // set pointer to zero
 		pss.hide();
+		updateNetsView();
 	}
 }
 
+void CopperField::updateActiveLayer(LayerWidget::LayerType layer)
+{
+	activeLayer = layer;
+
+	switch(layer){
+	case LayerWidget::TOP_MILL:
+	case LayerWidget::TOP:
+	{
+		activeGerber = gerberTop;
+	}break;
+	case LayerWidget::BOT_MILL:
+	case LayerWidget::BOT:
+	{
+		activeGerber = gerberBot;
+	}break;
+	case LayerWidget::CONTOUR:
+	case LayerWidget::CONTOUR_MILL:
+	{
+		activeGerber = gerberContour;
+	}break;
+	case LayerWidget::DRILLS:
+	{
+		activeGerber = gerberDrill;
+	}break;
+	default:
+		qDebug("Error: unhandled active layer");
+		while(1);
+	}
+
+	updateNetsView();
+}
+
 void CopperField::calearMillingPaths(){
-	foreach(QGraphicsPathItem* i, activeGerber()->getMillingGraphicItems()){
+
+	if(activeGerber == 0){
+		return;
+	}
+
+	foreach(QGraphicsPathItem* i, activeGerber->getMillingGraphicItems()){
 		view->scene->removeItem(i);
 	}
 
-	activeGerber()->deleteMillingPolygons();
+	activeGerber->deleteMillingPolygons();
 
 	LayerWidget::LayerType l = layerSettings.activeLayer();
 	if(l == LayerWidget::BOT || l == LayerWidget::BOT_MILL){

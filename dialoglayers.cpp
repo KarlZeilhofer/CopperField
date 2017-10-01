@@ -1,5 +1,6 @@
 #include "dialoglayers.h"
 #include "ui_dialoglayers.h"
+#include "qdebug.h"
 
 //DialogLayers::FirstLayer = BOT;
 //enum LayerType DialogLayers::LastLayer = DRILLS;
@@ -27,6 +28,7 @@ DialogLayers::DialogLayers(QWidget *parent) :
 	bg.addButton(ui->layerWidget_contourMill->radioButton(), LayerWidget::CONTOUR_MILL);
 	bg.addButton(ui->layerWidget_drill->radioButton(), LayerWidget::DRILLS);
 
+	connect(&bg, SIGNAL(buttonClicked(int)), this, SLOT(emitActiveLayer(int)));
 }
 
 DialogLayers::~DialogLayers()
@@ -85,4 +87,9 @@ void DialogLayers::disableLayerWidget(LayerWidget::LayerType layer)
 LayerWidget::LayerType DialogLayers::activeLayer()
 {
 	return (LayerWidget::LayerType)(bg.checkedId());
+}
+
+void DialogLayers::emitActiveLayer(int buttonId)
+{
+	emit activeLayerChanged(activeLayer());
 }

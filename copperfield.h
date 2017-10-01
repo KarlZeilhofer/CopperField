@@ -53,6 +53,7 @@ private slots:
 
 public slots:
 	void calculationFinished();
+	void updateActiveLayer(LayerWidget::LayerType layer);
 
 public:
 	static CopperField* app;
@@ -81,6 +82,7 @@ private:
     bool saveFile(const QString &fileName);
     void setCurrentFile(const QString &fileName);
     QString strippedName(const QString &fullFileName);
+	void updateNetsView();
 
 
     QString curFile;
@@ -90,9 +92,12 @@ private:
 	GerberReader* gerberBot; // bottom layer for copper and text
 	GerberReader* gerberDrill; // drill layer
 	GerberReader* gerberContour; // contour mill layer
-	GerberReader* activeGerber(); // currently selected gerber, set by the layer dialog
 	GerberReader* gerberCurrentlyProcessing; // this pointer is used for the calculating milling paths in a thread
 	ProgressSplashScreen pss;
+
+	GerberReader* activeGerber; // currently selected gerber, set by the layer dialog
+	LayerWidget::LayerType activeLayer;
+
 
     QMenu *fileMenu;
     QMenu *editMenu;

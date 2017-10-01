@@ -709,7 +709,7 @@ void GerberReader::buildNetsByPoints()
 	qDebug(QString("Fused %1 elements to %2 different nets!").arg(numElements).arg(nets.size()).toLatin1());
 
 	// TODO 1: make netsViewer threadsave! (was ist hier genau gemeint?
-	CopperField::app->netsViewer->setNets(nets);
+	//CopperField::app->netsViewer->setNets(nets);
 }
 
 
